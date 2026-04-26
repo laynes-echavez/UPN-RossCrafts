@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ross Crafts - Tienda Online{% endblock %}</title>
+    {% load static %}
+    {% csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Configuración de Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#41431B',
+                            dark: '#2d2f13',
+                            light: '#5a5d26',
+                        },
+                        secondary: {
+                            DEFAULT: '#AEB784',
+                            dark: '#8a9468',
+                            light: '#c5d19f',
+                        },
+                        accent: '#E3DBBB',
+                        cream: '#F8F3E1',
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-cream font-sans">
+    <!-- Navbar -->
+    <nav class="bg-primary shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <a href="{% url 'ecommerce:home' %}" class="flex items-center space-x-2 text-white font-bold text-xl hover:text-secondary transition">
+                    <i class="fas fa-palette"></i>
+                    <span>Ross Crafts</span>
+                </a>
+                
+                <!-- Menu Desktop -->
+                <div class="hidden md:flex items-center space-x-1">
+                    <a href="{% url 'ecommerce:home' %}" class="text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition">
+                        <i class="fas fa-home mr-1"></i> Inicio
+                    </a>
+                    <a href="{% url 'ecommerce:catalog' %}" class="text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition">
+                        <i class="fas fa-shopping-bag mr-1"></i> Tienda
+                    </a>
+                    
+                    {% if user.is_authenticated and user.is_staff %}
+                        <!-- Staff/Employee Menu -->
+                        <div class="relative group">
+                            <button class="text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition flex items-center">
+                                <i class="fas fa-user-shield mr-1"></i> {{ user.username }}
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                <a href="{% url 'authentication:dashboard_redirect' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg">
+                                    <i class="fas fa-tachometer-alt mr-2"></i> Dashboard Admin
+                                </a>
+                                <a href="{% url 'authentication:logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-b-lg">
+                                    <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+                                </a>
+                            </div>
+                        </div>
+                    {% elif user.is_authenticated %}
+                        <!-- Customer Menu -->
+                        <div class="relative group">
+                            <button class="text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition flex items-center">
+                                <i class="fas fa-user mr-1"></i> {{ user.first_name }}
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                <a href="{% url 'ecommerce:customer_profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg">
+                                    <i class="fas fa-user-circle mr-2"></i> Mi Perfil
+                                </a>
+                                <a href="{% url 'ecommerce:customer_orders' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-shopping-bag mr-2"></i> Mis Pedidos
+                                </a>
+                                <a href="{% url 'ecommerce:customer_logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-b-lg">
+                                    <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Guest Menu -->
+                        <a href="{% url 'ecommerce:customer_login' %}" class="text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition">
+                            <i class="fas fa-sign-in-alt mr-1"></i> Iniciar Sesión
+                        </a>
+                        <a href="{% url 'ecommerce:customer_register' %}" class="text-white px-3 py-2 rounded-md text-sm font-medium bg-secondary hover:bg-secondary-dark transition">
+                            <i class="fas fa-user-plus mr-1"></i> Registrarse
+                        </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'ecommerce:cart' %}" class="text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition relative">
+                        <i class="fas fa-shopping-cart mr-1"></i> Carrito
+                        <span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">0</span>
+                    </a>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button type="button" class="text-white hover:bg-white/10 p-2 rounded-md" onclick="toggleMobileMenu()">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-primary-dark">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="{% url 'ecommerce:home' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-white/10">
+                    <i class="fas fa-home mr-2"></i> Inicio
+                </a>
+                <a href="{% url 'ecommerce:catalog' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-white/10">
+                    <i class="fas fa-shopping-bag mr-2"></i> Tienda
+                </a>
+                {% if user.is_authenticated and user.is_staff %}
+                    <!-- Staff Menu -->
+                    <a href="{% url 'authentication:dashboard_redirect' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-white/10">
+                        <i class="fas fa-tachometer-alt mr-2"></i> Dashboard Admin
+                    </a>
+                    <a href="{% url 'authentication:logout' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-white/10">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+                    </a>
+                {% elif user.is_authenticated %}
+                    <!-- Customer Menu -->
+                    <a href="{% url 'ecommerce:customer_profile' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-white/10">
+                        <i class="fas fa-user-circle mr-2"></i> Mi Perfil
+                    </a>
+                    <a href="{% url 'ecommerce:customer_orders' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-white/10">
+                        <i class="fas fa-shopping-bag mr-2"></i> Mis Pedidos
+                    </a>
+                    <a href="{% url 'ecommerce:customer_logout' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-white/10">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+                    </a>
+                {% else %}
+                    <!-- Guest Menu -->
+                    <a href="{% url 'ecommerce:customer_login' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-white/10">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Iniciar Sesión
+                    </a>
+                    <a href="{% url 'ecommerce:customer_register' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium bg-secondary hover:bg-secondary-dark">
+                        <i class="fas fa-user-plus mr-2"></i> Registrarse
+                    </a>
+                {% endif %}
+                <a href="{% url 'ecommerce:cart' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-white/10">
+                    <i class="fas fa-shopping-cart mr-2"></i> Carrito (<span id="cart-count-mobile">0</span>)
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-primary text-white py-12 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fas fa-palette text-2xl"></i>
+                        <h3 class="text-xl font-bold">Ross Crafts</h3>
+                    </div>
+                    <p class="text-white/80">Descubre el mundo de las manualidades con productos artesanales únicos y de alta calidad.</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-bold mb-4">Enlaces</h4>
+                    <ul class="space-y-2">
+                        <li><a href="{% url 'ecommerce:catalog' %}" class="text-white/80 hover:text-white transition">Tienda</a></li>
+                        <li><a href="#" class="text-white/80 hover:text-white transition">Políticas de Devolución</a></li>
+                        <li><a href="#" class="text-white/80 hover:text-white transition">Términos y Condiciones</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-bold mb-4">Contacto</h4>
+                    <ul class="space-y-2 text-white/80">
+                        <li><i class="fas fa-map-marker-alt mr-2"></i> Trujillo, Perú</li>
+                        <li><i class="fas fa-phone mr-2"></i> +51 987 654 321</li>
+                        <li><i class="fas fa-envelope mr-2"></i> info@rosscrafts.com</li>
+                    </ul>
+                    <div class="flex space-x-4 mt-4">
+                        <a href="#" class="text-2xl hover:text-secondary transition"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-2xl hover:text-secondary transition"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-2xl hover:text-secondary transition"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-white/20 pt-8 text-center text-white/80">
+                <p>&copy; 2026 Ross Crafts. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // CSRF Token — intenta cookie primero, luego meta tag
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken') || document.querySelector('meta[name="csrf-token"]')?.content || '';
+        
+        // Toggle mobile menu
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+        
+        // Actualizar contador del carrito
+        function updateCartCount() {
+            fetch('/carrito/contador/')
+                .then(r => r.json())
+                .then(data => {
+                    const badge = document.getElementById('cart-count');
+                    const badgeMobile = document.getElementById('cart-count-mobile');
+                    if (badge) {
+                        badge.textContent = data.cart_count;
+                        if (data.cart_count > 0) {
+                            badge.classList.remove('hidden');
+                        } else {
+                            badge.classList.add('hidden');
+                        }
+                    }
+                    if (badgeMobile) {
+                        badgeMobile.textContent = data.cart_count;
+                    }
+                })
+                .catch(error => console.error('Error updating cart:', error));
+        }
+        
+        // Actualizar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartCount();
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

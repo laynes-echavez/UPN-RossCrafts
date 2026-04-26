@@ -1,0 +1,101 @@
+{% extends 'store/base_store.html' %}
+
+{% block title %}¡Pedido Confirmado! - Ross Crafts{% endblock %}
+
+{% block extra_css %}
+<style>
+    @keyframes scaleIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+    .check-circle { animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    .check-path {
+        stroke-dasharray: 100;
+        stroke-dashoffset: 100;
+        animation: drawCheck 0.6s ease-out 0.4s forwards;
+    }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-up { animation: fadeUp 0.5s ease-out 0.3s both; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-cream flex items-center justify-center py-16 px-4">
+    <div class="max-w-lg w-full">
+
+        <!-- Success Card -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 sm:p-10 text-center">
+
+            <!-- Animated check -->
+            <div class="check-circle w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg viewBox="0 0 52 52" class="w-14 h-14">
+                    <polyline class="check-path" points="14 27 22 35 38 19"
+                              fill="none" stroke="#16a34a" stroke-width="3.5"
+                              stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+
+            <div class="fade-up">
+                <h1 class="text-3xl font-bold text-primary mb-2">¡Pedido Confirmado!</h1>
+                <p class="text-gray-500 mb-6">Gracias por tu compra. Hemos recibido tu pedido y lo estamos procesando.</p>
+
+                {% if order %}
+                <div class="bg-cream rounded-xl p-5 mb-6 text-left space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">N° de Pedido</span>
+                        <span class="font-bold text-primary">#{{ order.id }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Fecha</span>
+                        <span class="font-medium text-gray-700">{{ order.created_at|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Total pagado</span>
+                        <span class="font-bold text-green-600 text-base">S/. {{ order.total|floatformat:2 }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Estado</span>
+                        <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Pagado
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 text-sm text-blue-700 flex items-start gap-2">
+                    <i class="fas fa-envelope mt-0.5 flex-shrink-0"></i>
+                    <p>Hemos enviado un email de confirmación con los detalles de tu pedido.</p>
+                </div>
+                {% endif %}
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    {% if order %}
+                    <a href="{% url 'ecommerce:customer_orders' %}"
+                       class="flex-1 inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-6 rounded-xl transition">
+                        <i class="fas fa-box"></i> Ver mis pedidos
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'ecommerce:catalog' %}"
+                       class="flex-1 inline-flex items-center justify-center gap-2 bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold py-3 px-6 rounded-xl transition">
+                        <i class="fas fa-shopping-bag"></i> Seguir comprando
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trust badges -->
+        <div class="grid grid-cols-3 gap-4 mt-6 text-center">
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <i class="fas fa-shipping-fast text-2xl text-secondary mb-2 block"></i>
+                <p class="text-xs text-gray-500 font-medium">Envío rápido</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <i class="fas fa-headset text-2xl text-secondary mb-2 block"></i>
+                <p class="text-xs text-gray-500 font-medium">Soporte 24/7</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <i class="fas fa-shield-alt text-2xl text-secondary mb-2 block"></i>
+                <p class="text-xs text-gray-500 font-medium">Compra segura</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

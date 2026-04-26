@@ -1,0 +1,132 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}{{ supplier.company_name }} - Ross Crafts{% endblock %}
+{% block content %}
+
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-primary flex items-center gap-2">
+            <i class="fas fa-building text-secondary"></i> {{ supplier.company_name }}
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">Detalle del proveedor</p>
+    </div>
+    <div class="flex items-center gap-2">
+        {% if request.user.role == 'administrador' %}
+        <a href="{% url 'suppliers:supplier_update' supplier.pk %}"
+           class="inline-flex items-center gap-2 bg-secondary/20 hover:bg-secondary text-primary hover:text-white font-semibold px-4 py-2 rounded-lg transition text-sm">
+            <i class="fas fa-pencil-alt text-xs"></i> Editar
+        </a>
+        {% endif %}
+        <a href="{% url 'suppliers:supplier_list' %}"
+           class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold px-4 py-2 rounded-lg transition text-sm">
+            <i class="fas fa-arrow-left text-xs"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <div class="flex flex-col gap-6">
+        <!-- Info -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-primary px-4 py-3">
+                <h2 class="text-white font-semibold text-sm flex items-center gap-2"><i class="fas fa-info-circle"></i> Información</h2>
+            </div>
+            <div class="p-4 space-y-3 text-sm">
+                {% for label, value in forloop.parentloop.0|default:'' %}{% endfor %}
+                <div class="flex justify-between"><span class="text-gray-500">Empresa</span><span class="font-semibold text-primary">{{ supplier.company_name }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Contacto</span><span class="text-gray-700">{{ supplier.contact_name|default:"—" }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">RUC</span>
+                    {% if supplier.ruc %}<span class="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">{{ supplier.ruc }}</span>{% else %}<span class="text-gray-400 italic">—</span>{% endif %}
+                </div>
+                <div class="flex justify-between"><span class="text-gray-500">Email</span><span class="text-gray-700 text-xs">{{ supplier.email|default:"—" }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Teléfono</span><span class="text-gray-700">{{ supplier.phone|default:"—" }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Dirección</span><span class="text-gray-700 text-xs text-right max-w-[160px]">{{ supplier.address|default:"—" }}</span></div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-500">Estado</span>
+                    {% if supplier.is_active %}
+                    <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full"><span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Activo</span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-500 text-xs font-semibold px-2.5 py-1 rounded-full"><span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span> Inactivo</span>
+                    {% endif %}
+                </div>
+                <div class="flex justify-between pt-2 border-t border-gray-100"><span class="text-gray-500">Registrado</span><span class="text-gray-600 text-xs">{{ supplier.created_at|date:"d/m/Y" }}</span></div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-accent px-4 py-3">
+                <h2 class="text-primary font-semibold text-sm flex items-center gap-2"><i class="fas fa-chart-bar"></i> Estadísticas</h2>
+            </div>
+            <div class="p-4 space-y-3">
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div><p class="text-xs text-gray-500">Total Órdenes</p><p class="text-2xl font-bold text-primary">{{ total_orders }}</p></div>
+                    <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><i class="fas fa-shopping-cart text-primary"></i></div>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                    <div><p class="text-xs text-gray-500">Pendientes</p><p class="text-2xl font-bold text-yellow-600">{{ pending_orders }}</p></div>
+                    <div class="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center"><i class="fas fa-clock text-yellow-600"></i></div>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div><p class="text-xs text-gray-500">Total Gastado</p><p class="text-xl font-bold text-green-700">S/. {{ total_spent|floatformat:2 }}</p></div>
+                    <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center"><i class="fas fa-dollar-sign text-green-600"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-primary px-4 py-3">
+                <h2 class="text-white font-semibold text-sm flex items-center gap-2"><i class="fas fa-shopping-cart"></i> Últimas Órdenes de Compra</h2>
+            </div>
+            {% if purchase_orders %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-100">
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">N° OC</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Fecha</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">Estado</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Total</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">Ver</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for order in purchase_orders %}
+                        <tr class="hover:bg-cream/60 transition-colors">
+                            <td class="px-4 py-3 font-bold text-primary">OC-{{ order.id }}</td>
+                            <td class="px-4 py-3 text-gray-600 text-xs">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                            <td class="px-4 py-3 text-center">
+                                {% if order.status == 'pending' %}<span class="inline-flex items-center bg-yellow-100 text-yellow-700 text-xs font-semibold px-2.5 py-1 rounded-full">Pendiente</span>
+                                {% elif order.status == 'received' %}<span class="inline-flex items-center bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">Recibida</span>
+                                {% elif order.status == 'cancelled' %}<span class="inline-flex items-center bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-1 rounded-full">Cancelada</span>{% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-right font-bold text-primary">S/. {{ order.total|floatformat:2 }}</td>
+                            <td class="px-4 py-3 text-center">
+                                <a href="{% url 'suppliers:purchase_order_detail' order.pk %}"
+                                   class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 hover:bg-accent text-gray-600 hover:text-primary transition">
+                                    <i class="fas fa-eye text-xs"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-4 py-3 border-t border-gray-100 bg-gray-50/50">
+                <a href="{% url 'suppliers:purchase_order_list' %}?supplier={{ supplier.id }}"
+                   class="text-primary hover:underline text-sm font-semibold">Ver todas las órdenes →</a>
+            </div>
+            {% else %}
+            <div class="px-4 py-16 text-center text-gray-400">
+                <i class="fas fa-shopping-cart text-5xl mb-3 block"></i>
+                <p class="font-semibold">No hay órdenes de compra registradas</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

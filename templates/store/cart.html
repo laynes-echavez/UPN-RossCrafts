@@ -1,0 +1,308 @@
+{% extends 'store/base_store.html' %}
+
+{% block title %}Carrito de Compras - Ross Crafts{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="bg-primary text-white py-12 mb-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl md:text-4xl font-bold mb-2 flex items-center gap-3">
+            <i class="fas fa-shopping-cart"></i> Carrito de Compras
+        </h1>
+        <p class="text-white/80">Revisa tus productos antes de proceder al pago</p>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+    {% if items %}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Cart Items (2/3) -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <!-- Header -->
+                <div class="p-4 bg-cream border-b border-accent">
+                    <h2 class="text-lg font-bold text-primary flex items-center gap-2">
+                        <i class="fas fa-box-open text-secondary"></i> 
+                        Productos en tu carrito ({{ items.count }})
+                    </h2>
+                </div>
+                
+                <!-- Items List -->
+                <div class="divide-y divide-gray-100">
+                    {% for item in items %}
+                    <div class="p-4 hover:bg-cream/30 transition-colors" id="cart-item-{{ item.id }}">
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            
+                            <!-- Product Image -->
+                            <div class="flex-shrink-0">
+                                <div class="w-24 h-24 rounded-lg overflow-hidden bg-accent flex items-center justify-center">
+                                    {% if item.product.image %}
+                                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}"
+                                         class="w-full h-full object-cover">
+                                    {% else %}
+                                    <div class="w-full h-full bg-gradient-to-br from-accent to-secondary flex items-center justify-center p-2">
+                                        <span class="text-primary font-bold text-xs text-center">{{ item.product.name|truncatewords:3 }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Product Info -->
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-semibold text-primary text-base mb-1">{{ item.product.name }}</h3>
+                                <p class="text-xs text-gray-500 mb-2">
+                                    <span class="font-mono bg-gray-100 px-2 py-0.5 rounded">{{ item.product.sku }}</span>
+                                </p>
+                                <div class="flex items-center gap-2 text-xs text-gray-600">
+                                    <i class="fas fa-box text-gray-400"></i>
+                                    <span>{{ item.product.stock_quantity }} disponibles</span>
+                                </div>
+                                
+                                <!-- Mobile: Price -->
+                                <div class="sm:hidden mt-2">
+                                    <span class="text-lg font-bold text-primary">S/. {{ item.product.price }}</span>
+                                    <span class="text-xs text-gray-500"> c/u</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Desktop: Price -->
+                            <div class="hidden sm:flex flex-col items-end justify-between">
+                                <div class="text-right">
+                                    <div class="text-sm text-gray-500 mb-1">Precio unitario</div>
+                                    <div class="text-lg font-bold text-primary">S/. {{ item.product.price }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quantity Controls & Subtotal -->
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-4 pt-4 border-t border-gray-100">
+                            
+                            <!-- Quantity Controls -->
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm font-semibold text-gray-600">Cantidad:</span>
+                                <div class="flex items-center border-2 border-accent rounded-lg overflow-hidden">
+                                    <button onclick="updateQuantity({{ item.id }}, {{ item.quantity }} - 1, {{ item.product.stock_quantity }})"
+                                            class="px-3 py-2 bg-accent hover:bg-secondary hover:text-white text-primary font-bold transition">
+                                        <i class="fas fa-minus text-xs"></i>
+                                    </button>
+                                    <input type="number" value="{{ item.quantity }}" readonly
+                                           class="w-16 text-center font-bold text-primary border-none outline-none py-2 bg-white">
+                                    <button onclick="updateQuantity({{ item.id }}, {{ item.quantity }} + 1, {{ item.product.stock_quantity }})"
+                                            class="px-3 py-2 bg-accent hover:bg-secondary hover:text-white text-primary font-bold transition">
+                                        <i class="fas fa-plus text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Subtotal & Remove -->
+                            <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                                <div class="text-right">
+                                    <div class="text-xs text-gray-500 mb-1">Subtotal</div>
+                                    <div class="text-xl font-bold text-primary" id="item-subtotal-{{ item.id }}">
+                                        S/. {{ item.subtotal }}
+                                    </div>
+                                </div>
+                                <button onclick="removeItem({{ item.id }})"
+                                        class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-red-50 hover:bg-red-500 text-red-500 hover:text-white transition">
+                                    <i class="fas fa-trash-alt text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Continue Shopping Button (Mobile) -->
+            <div class="lg:hidden mt-4">
+                <a href="{% url 'ecommerce:catalog' %}"
+                   class="block w-full text-center bg-white border-2 border-primary text-primary font-semibold py-3 px-4 rounded-lg hover:bg-primary hover:text-white transition">
+                    <i class="fas fa-arrow-left mr-2"></i> Continuar Comprando
+                </a>
+            </div>
+        </div>
+        
+        <!-- Cart Summary (1/3) -->
+        <div class="lg:col-span-1">
+            <div class="bg-accent rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
+                <!-- Header -->
+                <div class="p-4 bg-primary text-white">
+                    <h2 class="text-lg font-bold flex items-center gap-2">
+                        <i class="fas fa-receipt"></i> Resumen del Pedido
+                    </h2>
+                </div>
+                
+                <!-- Summary Content -->
+                <div class="p-6 space-y-4">
+                    <!-- Subtotal -->
+                    <div class="flex justify-between items-center text-base">
+                        <span class="text-gray-600">Subtotal:</span>
+                        <span class="font-bold text-primary" id="cart-subtotal">S/. {{ subtotal }}</span>
+                    </div>
+                    
+                    <!-- Shipping -->
+                    <div class="flex justify-between items-center text-base">
+                        <span class="text-gray-600">Envío:</span>
+                        <span class="text-sm text-gray-500 italic">A calcular</span>
+                    </div>
+                    
+                    <hr class="border-gray-200">
+                    
+                    <!-- Total -->
+                    <div class="flex justify-between items-center text-2xl font-bold text-primary">
+                        <span>Total:</span>
+                        <span id="cart-total">S/. {{ subtotal }}</span>
+                    </div>
+                    
+                    <!-- Checkout Button -->
+                    <button onclick="proceedToCheckout()"
+                            class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-4 rounded-lg transition-all transform hover:scale-105 shadow-sm flex items-center justify-center gap-2 text-base">
+                        <i class="fas fa-lock"></i> Proceder al Pago
+                    </button>
+                    
+                    <!-- Continue Shopping (Desktop) -->
+                    <a href="{% url 'ecommerce:catalog' %}"
+                       class="hidden lg:block w-full text-center bg-white border-2 border-primary text-primary font-semibold py-3 px-4 rounded-lg hover:bg-primary hover:text-white transition">
+                        <i class="fas fa-arrow-left mr-2"></i> Continuar Comprando
+                    </a>
+                    
+                    <!-- Security Badge -->
+                    <div class="pt-4 border-t border-gray-200 text-center">
+                        <div class="inline-flex items-center gap-2 text-sm text-gray-600">
+                            <i class="fas fa-shield-alt text-green-600"></i>
+                            <span>Compra 100% segura</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Trust Badges -->
+            <div class="mt-4 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div>
+                        <i class="fas fa-shipping-fast text-2xl text-secondary mb-1"></i>
+                        <p class="text-xs text-gray-600 font-medium">Envío rápido</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-undo text-2xl text-secondary mb-1"></i>
+                        <p class="text-xs text-gray-600 font-medium">Devoluciones</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-headset text-2xl text-secondary mb-1"></i>
+                        <p class="text-xs text-gray-600 font-medium">Soporte 24/7</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- Empty Cart -->
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+            <div class="w-24 h-24 bg-accent rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-shopping-cart text-5xl text-secondary"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-primary mb-3">Tu carrito está vacío</h2>
+            <p class="text-gray-600 mb-6">¡Agrega productos para comenzar tu compra!</p>
+            <a href="{% url 'ecommerce:catalog' %}"
+               class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105 shadow-sm">
+                <i class="fas fa-shopping-bag"></i> Ir a la Tienda
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateQuantity(itemId, newQuantity, maxStock) {
+    if (newQuantity < 1) {
+        if (confirm('¿Deseas eliminar este producto del carrito?')) {
+            removeItem(itemId);
+        }
+        return;
+    }
+    
+    if (newQuantity > maxStock) {
+        alert(`Solo hay ${maxStock} unidades disponibles`);
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('item_id', itemId);
+    formData.append('quantity', newQuantity);
+    
+    fetch('/carrito/actualizar/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById(`item-subtotal-${itemId}`).textContent = `S/. ${data.item_subtotal.toFixed(2)}`;
+            document.getElementById('cart-subtotal').textContent = `S/. ${data.subtotal.toFixed(2)}`;
+            document.getElementById('cart-total').textContent = `S/. ${data.subtotal.toFixed(2)}`;
+            
+            const qtyInput = document.querySelector(`#cart-item-${itemId} input[type="number"]`);
+            qtyInput.value = newQuantity;
+            
+            updateCartCount();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al actualizar el carrito');
+    });
+}
+
+function removeItem(itemId) {
+    if (!confirm('¿Estás seguro de eliminar este producto?')) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('item_id', itemId);
+    
+    fetch('/carrito/eliminar/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById(`cart-item-${itemId}`).remove();
+            document.getElementById('cart-subtotal').textContent = `S/. ${data.subtotal.toFixed(2)}`;
+            document.getElementById('cart-total').textContent = `S/. ${data.subtotal.toFixed(2)}`;
+            updateCartCount();
+            
+            if (data.cart_count === 0) {
+                location.reload();
+            }
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al eliminar el producto');
+    });
+}
+
+function proceedToCheckout() {
+    window.location.href = '{% url "payments:checkout" %}';
+}
+</script>
+{% endblock %}

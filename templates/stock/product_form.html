@@ -1,0 +1,243 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}{% if object %}Editar{% else %}Nuevo{% endif %} Producto - Ross Crafts{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="mb-6">
+    <div class="flex items-center gap-3 mb-2">
+        <a href="{% url 'stock:product_list' %}"
+           class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-gray-200 hover:bg-accent text-gray-600 hover:text-primary transition">
+            <i class="fas fa-arrow-left text-sm"></i>
+        </a>
+        <h1 class="text-2xl font-bold text-primary flex items-center gap-2">
+            <i class="fas fa-{% if object %}pencil-alt{% else %}plus-circle{% endif %} text-secondary"></i>
+            {% if object %}Editar Producto{% else %}Nuevo Producto{% endif %}
+        </h1>
+    </div>
+    <p class="text-sm text-gray-500 ml-12">
+        {% if object %}Actualiza la información del producto{% else %}Completa los datos para crear un nuevo producto{% endif %}
+    </p>
+</div>
+
+<!-- Form Card -->
+<div class="max-w-4xl">
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        {% csrf_token %}
+        
+        <div class="p-6 space-y-6">
+            
+            <!-- Basic Information Section -->
+            <div>
+                <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fas fa-info-circle text-secondary"></i> Información Básica
+                </h2>
+                
+                <!-- Product Name -->
+                <div class="mb-4">
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                        {{ form.name.label }} <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}"
+                           value="{{ form.name.value|default:'' }}"
+                           class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                           placeholder="Ej: Bolso Artesanal de Cuero" required>
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- SKU + Category -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="{{ form.sku.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                            {{ form.sku.label }} <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="{{ form.sku.name }}" id="{{ form.sku.id_for_label }}"
+                               value="{{ form.sku.value|default:'' }}"
+                               class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                               placeholder="Ej: BOLSO001" required>
+                        {% if form.sku.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.sku.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.category.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                            {{ form.category.label }} <span class="text-red-500">*</span>
+                        </label>
+                        <select name="{{ form.category.name }}" id="{{ form.category.id_for_label }}"
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition bg-white" required>
+                            <option value="">Selecciona una categoría</option>
+                            {% for value, label in form.category.field.choices %}
+                                {% if value %}
+                                <option value="{{ value }}" {% if form.category.value == value or form.category.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        {% if form.category.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.category.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Description -->
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                        {{ form.description.label }}
+                    </label>
+                    <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" rows="3"
+                              class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition resize-none"
+                              placeholder="Describe las características del producto...">{{ form.description.value|default:'' }}</textarea>
+                    {% if form.description.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <hr class="border-gray-100">
+            
+            <!-- Pricing Section -->
+            <div>
+                <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fas fa-dollar-sign text-secondary"></i> Precios
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="{{ form.price.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                            {{ form.price.label }} <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">S/.</span>
+                            <input type="number" step="0.01" name="{{ form.price.name }}" id="{{ form.price.id_for_label }}"
+                                   value="{{ form.price.value|default:'' }}"
+                                   class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                                   placeholder="0.00" required>
+                        </div>
+                        {% if form.price.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.price.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.cost_price.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                            {{ form.cost_price.label }}
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">S/.</span>
+                            <input type="number" step="0.01" name="{{ form.cost_price.name }}" id="{{ form.cost_price.id_for_label }}"
+                                   value="{{ form.cost_price.value|default:'' }}"
+                                   class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                                   placeholder="0.00">
+                        </div>
+                        {% if form.cost_price.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.cost_price.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="border-gray-100">
+            
+            <!-- Inventory Section -->
+            <div>
+                <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fas fa-boxes text-secondary"></i> Inventario
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="{{ form.stock_quantity.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                            {{ form.stock_quantity.label }} <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="{{ form.stock_quantity.name }}" id="{{ form.stock_quantity.id_for_label }}"
+                               value="{{ form.stock_quantity.value|default:'0' }}"
+                               class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                               placeholder="0" required>
+                        {% if form.stock_quantity.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.stock_quantity.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.min_stock_quantity.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                            {{ form.min_stock_quantity.label }}
+                        </label>
+                        <input type="number" name="{{ form.min_stock_quantity.name }}" id="{{ form.min_stock_quantity.id_for_label }}"
+                               value="{{ form.min_stock_quantity.value|default:'5' }}"
+                               class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                               placeholder="5">
+                        <p class="mt-1 text-xs text-gray-500">Recibirás alertas cuando el stock esté por debajo de este valor</p>
+                        {% if form.min_stock_quantity.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.min_stock_quantity.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="border-gray-100">
+            
+            <!-- Image Section -->
+            <div>
+                <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fas fa-image text-secondary"></i> Imagen del Producto
+                </h2>
+                
+                <div class="flex flex-col md:flex-row gap-6 items-start">
+                    <div class="flex-1">
+                        <label for="{{ form.image.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                            {{ form.image.label }}
+                        </label>
+                        <input type="file" name="{{ form.image.name }}" id="{{ form.image.id_for_label }}" accept="image/*"
+                               class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent file:text-primary hover:file:bg-secondary hover:file:text-white file:transition">
+                        <p class="mt-1 text-xs text-gray-500">Formatos: JPG, PNG, GIF (máx. 5MB)</p>
+                        {% if form.image.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.image.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    {% if object and object.image %}
+                    <div class="flex-shrink-0">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Vista Previa</p>
+                        <img src="{{ object.image.url }}" alt="{{ object.name }}"
+                             class="w-32 h-32 object-cover rounded-lg border-2 border-gray-100 shadow-sm">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <hr class="border-gray-100">
+            
+            <!-- Status Section -->
+            <div>
+                <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fas fa-toggle-on text-secondary"></i> Estado
+                </h2>
+                
+                <label class="inline-flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="{{ form.is_active.name }}" id="{{ form.is_active.id_for_label }}"
+                           {% if form.is_active.value or form.is_active.value == None %}checked{% endif %}
+                           class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-2 focus:ring-primary/30 transition">
+                    <span class="text-sm font-medium text-gray-700">{{ form.is_active.label }}</span>
+                </label>
+                <p class="mt-1 ml-8 text-xs text-gray-500">Los productos inactivos no aparecerán en la tienda</p>
+            </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row gap-3 justify-end">
+            <a href="{% url 'stock:product_list' %}"
+               class="inline-flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 font-semibold px-6 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+            <button type="submit"
+                    class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-6 py-2.5 rounded-lg transition text-sm shadow-sm">
+                <i class="fas fa-save"></i> {% if object %}Actualizar{% else %}Crear{% endif %} Producto
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

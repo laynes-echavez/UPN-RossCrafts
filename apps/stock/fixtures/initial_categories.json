@@ -1,0 +1,56 @@
+[
+    {
+        "model": "stock.category",
+        "pk": 1,
+        "fields": {
+            "name": "Papelería",
+            "description": "Papel, cuadernos, libretas y productos de papelería",
+            "is_active": true
+        }
+    },
+    {
+        "model": "stock.category",
+        "pk": 2,
+        "fields": {
+            "name": "Máquinas",
+            "description": "Máquinas y equipos para manualidades",
+            "is_active": true
+        }
+    },
+    {
+        "model": "stock.category",
+        "pk": 3,
+        "fields": {
+            "name": "Insumos",
+            "description": "Materiales e insumos para manualidades",
+            "is_active": true
+        }
+    },
+    {
+        "model": "stock.category",
+        "pk": 4,
+        "fields": {
+            "name": "Herramientas",
+            "description": "Herramientas manuales y accesorios",
+            "is_active": true
+        }
+    },
+    {
+        "model": "stock.category",
+        "pk": 5,
+        "fields": {
+            "name": "Decoración",
+            "description": "Artículos decorativos y ornamentales",
+            "is_active": true
+        }
+    },
+    {
+        "model": "stock.category",
+        "pk": 6,
+        "fields": {
+            "name": "Textiles",
+            "description": "Telas, hilos y materiales textiles",
+            "is_active": true
+        }
+    }
+]

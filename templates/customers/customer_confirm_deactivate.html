@@ -1,0 +1,25 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Desactivar Cliente - Ross Crafts{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-user-slash text-2xl text-red-500"></i>
+        </div>
+        <h2 class="text-xl font-bold text-primary mb-2">¿Desactivar Cliente?</h2>
+        <p class="text-gray-600 mb-2">¿Estás seguro de que deseas desactivar a <strong>{{ customer.full_name }}</strong>?</p>
+        <p class="text-sm text-gray-400 mb-6">El cliente no podrá iniciar sesión, pero su historial de compras se mantendrá intacto.</p>
+        <form method="post" class="flex items-center justify-center gap-3">
+            {% csrf_token %}
+            <a href="{% url 'customers:customer_list' %}"
+               class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold px-5 py-2.5 rounded-xl transition text-sm">
+                Cancelar
+            </a>
+            <button type="submit"
+                    class="inline-flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold px-5 py-2.5 rounded-xl transition text-sm">
+                <i class="fas fa-user-slash"></i> Sí, Desactivar
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends 'store/base_store.html' %}
+
+{% block title %}Pedido #{{ order.id }} - Ross Crafts{% endblock %}
+
+{% block content %}
+<div class="bg-primary text-white py-10">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl font-bold flex items-center gap-3">
+            <i class="fas fa-receipt text-secondary"></i> Detalle del Pedido
+        </h1>
+        <nav class="text-sm text-white/60 mt-2">
+            <a href="{% url 'ecommerce:customer_orders' %}" class="hover:text-white transition">Mis Pedidos</a>
+            <span class="mx-2">/</span>
+            <span class="text-white">Pedido #{{ order.id }}</span>
+        </nav>
+    </div>
+</div>
+
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex flex-col lg:flex-row gap-6">
+
+        <!-- Sidebar -->
+        <aside class="w-full lg:w-56 flex-shrink-0">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-24">
+                <div class="p-4 border-b border-gray-100">
+                    <div class="w-14 h-14 rounded-full bg-secondary/20 flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-user text-primary text-2xl"></i>
+                    </div>
+                    <p class="text-center font-bold text-primary text-sm">{{ customer.full_name }}</p>
+                    <p class="text-center text-xs text-gray-400 truncate">{{ customer.email }}</p>
+                </div>
+                <nav class="p-2 space-y-0.5">
+                    <a href="{% url 'ecommerce:customer_profile' %}"
+                       class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-accent hover:text-primary transition">
+                        <i class="fas fa-user w-4 text-center"></i> Mi Perfil
+                    </a>
+                    <a href="{% url 'ecommerce:customer_orders' %}"
+                       class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium bg-primary text-white">
+                        <i class="fas fa-box w-4 text-center"></i> Mis Pedidos
+                    </a>
+                    <a href="{% url 'ecommerce:customer_change_password' %}"
+                       class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-accent hover:text-primary transition">
+                        <i class="fas fa-lock w-4 text-center"></i> Contraseña
+                    </a>
+                    <a href="{% url 'ecommerce:customer_logout' %}"
+                       class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition">
+                        <i class="fas fa-sign-out-alt w-4 text-center"></i> Cerrar Sesión
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="flex-1 min-w-0 space-y-5">
+
+            <!-- Info del pedido -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="text-xl font-bold text-primary flex items-center gap-2">
+                        <i class="fas fa-receipt text-secondary"></i> Pedido #{{ order.id }}
+                    </h2>
+                    {% if order.status == 'paid' %}
+                    <span class="inline-flex items-center gap-1.5 bg-green-100 text-green-700 text-sm font-semibold px-3 py-1.5 rounded-full">
+                        <span class="w-2 h-2 bg-green-500 rounded-full"></span> Pagado
+                    </span>
+                    {% elif order.status == 'shipped' %}
+                    <span class="inline-flex items-center gap-1.5 bg-blue-100 text-blue-700 text-sm font-semibold px-3 py-1.5 rounded-full">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full"></span> Enviado
+                    </span>
+                    {% elif order.status == 'delivered' %}
+                    <span class="inline-flex items-center gap-1.5 bg-secondary/20 text-primary text-sm font-semibold px-3 py-1.5 rounded-full">
+                        <span class="w-2 h-2 bg-secondary rounded-full"></span> Entregado
+                    </span>
+                    {% elif order.status == 'cancelled' %}
+                    <span class="inline-flex items-center gap-1.5 bg-red-100 text-red-700 text-sm font-semibold px-3 py-1.5 rounded-full">
+                        <span class="w-2 h-2 bg-red-500 rounded-full"></span> Cancelado
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1.5 bg-yellow-100 text-yellow-700 text-sm font-semibold px-3 py-1.5 rounded-full">
+                        <span class="w-2 h-2 bg-yellow-500 rounded-full"></span> {{ order.get_status_display }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-cream rounded-xl p-4">
+                        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">Fecha del Pedido</p>
+                        <p class="font-semibold text-primary">{{ order.created_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <div class="bg-cream rounded-xl p-4">
+                        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">Total Pagado</p>
+                        <p class="font-bold text-primary text-xl">S/. {{ order.total|floatformat:2 }}</p>
+                    </div>
+                    <div class="bg-cream rounded-xl p-4 sm:col-span-2">
+                        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">Dirección de Envío</p>
+                        <p class="font-semibold text-primary flex items-start gap-2">
+                            <i class="fas fa-map-marker-alt text-secondary mt-0.5 flex-shrink-0"></i>
+                            {{ order.shipping_address }}
+                        </p>
+                    </div>
+                    {% if order.payment_intent_id %}
+                    <div class="bg-cream rounded-xl p-4 sm:col-span-2">
+                        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">ID de Transacción</p>
+                        <p class="font-mono text-xs text-gray-600 break-all">{{ order.payment_intent_id }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Productos -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h3 class="text-lg font-bold text-primary flex items-center gap-2">
+                        <i class="fas fa-box-open text-secondary"></i> Productos
+                    </h3>
+                </div>
+
+                {% if items %}
+                <div class="divide-y divide-gray-100">
+                    {% for item in items %}
+                    <div class="flex items-center gap-4 px-6 py-4">
+                        <div class="w-14 h-14 rounded-xl overflow-hidden bg-accent flex-shrink-0">
+                            {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover">
+                            {% else %}
+                            <div class="w-full h-full flex items-center justify-center">
+                                <i class="fas fa-palette text-primary/30 text-xl"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold text-primary text-sm">{{ item.product.name }}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                {{ item.quantity }} × S/. {{ item.unit_price|floatformat:2 }}
+                            </p>
+                        </div>
+                        <p class="font-bold text-primary">S/. {{ item.subtotal|floatformat:2 }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Totales -->
+                <div class="px-6 py-4 bg-cream border-t border-gray-100">
+                    <div class="max-w-xs ml-auto space-y-2 text-sm">
+                        {% if order.sale %}
+                        <div class="flex justify-between text-gray-600">
+                            <span>Subtotal</span>
+                            <span>S/. {{ order.sale.subtotal|floatformat:2 }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex justify-between font-bold text-primary text-base pt-2 border-t border-gray-200">
+                            <span>Total</span>
+                            <span>S/. {{ order.total|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {% else %}
+                <div class="px-6 py-10 text-center text-gray-400">
+                    <i class="fas fa-box-open text-4xl mb-3 block"></i>
+                    <p>No hay productos asociados a este pedido.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div>
+                <a href="{% url 'ecommerce:customer_orders' %}"
+                   class="inline-flex items-center gap-2 text-primary hover:underline font-semibold text-sm">
+                    <i class="fas fa-arrow-left text-xs"></i> Volver a Mis Pedidos
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

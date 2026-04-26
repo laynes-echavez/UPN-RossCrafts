@@ -1,0 +1,12 @@
+Django==4.2.*
+mssql-django
+pyodbc
+django-environ
+Pillow
+reportlab
+openpyxl
+stripe
+django-ratelimit
+whitenoise
+gunicorn
+coverage>=7.0.0

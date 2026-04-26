@@ -1,0 +1,48 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Categorías - Ross Crafts{% endblock %}
+{% block content %}
+
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-primary flex items-center gap-2">
+            <i class="fas fa-tags text-secondary"></i> Categorías de Productos
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">{{ categories|length }} categoría{{ categories|length|pluralize }} registrada{{ categories|length|pluralize }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for category in categories %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
+        <div class="flex items-start justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-tag text-primary"></i>
+            </div>
+            {% if category.is_active %}
+            <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Activa
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-500 text-xs font-semibold px-2.5 py-1 rounded-full">
+                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span> Inactiva
+            </span>
+            {% endif %}
+        </div>
+        <h3 class="font-bold text-primary mb-1">{{ category.name }}</h3>
+        <p class="text-xs text-gray-500 mb-3">{{ category.description|default:"Sin descripción" }}</p>
+        <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+            <span class="text-xs text-gray-500">
+                <i class="fas fa-box text-gray-400 mr-1"></i>
+                {{ category.products.count }} producto{{ category.products.count|pluralize }}
+            </span>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-3 bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center text-gray-400">
+        <i class="fas fa-tags text-5xl mb-3 block"></i>
+        <p class="font-semibold">No hay categorías registradas</p>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

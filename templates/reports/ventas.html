@@ -1,0 +1,178 @@
+{% extends 'reports/base_dashboard.html' %}
+
+{% block report_title %}Reporte de Ventas{% endblock %}
+
+{% block dashboard_content %}
+
+<!-- Header -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-primary flex items-center gap-2">
+            <i class="fas fa-dollar-sign text-secondary"></i> Reporte de Ventas
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">Análisis detallado con filtros personalizados</p>
+    </div>
+    {% if user.role in 'gerente,administrador' %}
+    <div class="flex items-center gap-2">
+        <a href="{% url 'reports:reporte_ventas_pdf' %}?{{ request.GET.urlencode }}"
+           class="inline-flex items-center gap-2 bg-white border border-gray-200 text-red-600 font-semibold px-4 py-2 rounded-lg hover:bg-red-50 transition text-sm shadow-sm">
+            <i class="fas fa-file-pdf"></i> PDF
+        </a>
+        <a href="{% url 'reports:reporte_ventas_excel' %}?{{ request.GET.urlencode }}"
+           class="inline-flex items-center gap-2 bg-white border border-gray-200 text-green-700 font-semibold px-4 py-2 rounded-lg hover:bg-green-50 transition text-sm shadow-sm">
+            <i class="fas fa-file-excel"></i> Excel
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Filtros -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <form method="get" class="flex flex-wrap gap-3 items-end">
+        <div class="min-w-[140px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Desde</label>
+            <input type="date" name="fecha_desde" value="{{ fecha_desde }}"
+                   class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition">
+        </div>
+        <div class="min-w-[140px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Hasta</label>
+            <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}"
+                   class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition">
+        </div>
+        <div class="min-w-[130px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tipo</label>
+            <select name="tipo" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition bg-white">
+                <option value="todas" {% if tipo == 'todas' %}selected{% endif %}>Todas</option>
+                <option value="presencial" {% if tipo == 'presencial' %}selected{% endif %}>Presencial</option>
+                <option value="online" {% if tipo == 'online' %}selected{% endif %}>Online</option>
+            </select>
+        </div>
+        <div class="min-w-[150px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Método de Pago</label>
+            <select name="metodo_pago" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition bg-white">
+                <option value="todos" {% if metodo_pago == 'todos' %}selected{% endif %}>Todos</option>
+                <option value="cash" {% if metodo_pago == 'cash' %}selected{% endif %}>Efectivo</option>
+                <option value="card" {% if metodo_pago == 'card' %}selected{% endif %}>Tarjeta</option>
+                <option value="transfer" {% if metodo_pago == 'transfer' %}selected{% endif %}>Transferencia</option>
+                <option value="online" {% if metodo_pago == 'online' %}selected{% endif %}>Pago Online</option>
+            </select>
+        </div>
+        <div class="min-w-[130px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Estado</label>
+            <select name="estado" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition bg-white">
+                <option value="todos" {% if estado == 'todos' %}selected{% endif %}>Todos</option>
+                <option value="completed" {% if estado == 'completed' %}selected{% endif %}>Completadas</option>
+                <option value="cancelled" {% if estado == 'cancelled' %}selected{% endif %}>Canceladas</option>
+            </select>
+        </div>
+        <div class="flex gap-2">
+            <button type="submit"
+                    class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-4 py-2 rounded-lg transition text-sm">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+            {% if fecha_desde or fecha_hasta or tipo != 'todas' or metodo_pago != 'todos' or estado != 'todos' %}
+            <a href="{% url 'reports:reporte_ventas' %}"
+               class="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold px-3 py-2 rounded-lg transition text-sm">
+                <i class="fas fa-times text-xs"></i> Limpiar
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Resumen KPIs -->
+{% if ventas %}
+<div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
+        <p class="text-xl font-bold text-primary">S/. {{ total_ventas|floatformat:2 }}</p>
+        <p class="text-xs text-gray-500 font-medium mt-0.5">Total Ventas</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
+        <p class="text-xl font-bold text-primary">{{ num_transacciones }}</p>
+        <p class="text-xs text-gray-500 font-medium mt-0.5">Transacciones</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
+        <p class="text-xl font-bold text-primary">S/. {{ promedio_venta|floatformat:2 }}</p>
+        <p class="text-xs text-gray-500 font-medium mt-0.5">Promedio por Venta</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
+        <p class="text-xl font-bold text-orange-500">S/. {{ total_descuentos|floatformat:2 }}</p>
+        <p class="text-xs text-gray-500 font-medium mt-0.5">Total Descuentos</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabla -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100">
+        <h3 class="text-sm font-semibold text-primary flex items-center gap-2">
+            <i class="fas fa-list text-secondary"></i>
+            Resultados
+            <span class="bg-accent text-primary text-xs font-bold px-2 py-0.5 rounded-full">{{ ventas.count }}</span>
+        </h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-primary text-white">
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">N° Venta</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Fecha</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Cliente</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Método</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Tipo</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Subtotal</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Desc.</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Total</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Estado</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for venta in ventas %}
+                <tr class="hover:bg-cream/60 transition-colors">
+                    <td class="px-4 py-3 text-xs font-mono text-gray-500">#{{ venta.id }}</td>
+                    <td class="px-4 py-3 text-xs text-gray-600">{{ venta.created_at|date:"d/m/Y H:i" }}</td>
+                    <td class="px-4 py-3 font-medium text-gray-800">{{ venta.customer.full_name|default:"N/A" }}</td>
+                    <td class="px-4 py-3 text-gray-600 text-xs">{{ venta.get_payment_method_display }}</td>
+                    <td class="px-4 py-3 text-center">
+                        {% if venta.payment_method == 'online' %}
+                        <span class="inline-flex items-center bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">Online</span>
+                        {% else %}
+                        <span class="inline-flex items-center bg-secondary/20 text-primary text-xs font-semibold px-2.5 py-1 rounded-full">Presencial</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-right text-gray-600">S/. {{ venta.subtotal|floatformat:2 }}</td>
+                    <td class="px-4 py-3 text-right text-orange-500">S/. {{ venta.discount|floatformat:2 }}</td>
+                    <td class="px-4 py-3 text-right font-bold text-primary">S/. {{ venta.total|floatformat:2 }}</td>
+                    <td class="px-4 py-3 text-center">
+                        {% if venta.status == 'completed' %}
+                        <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> {{ venta.get_status_display }}
+                        </span>
+                        {% elif venta.status == 'cancelled' %}
+                        <span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span> {{ venta.get_status_display }}
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span> {{ venta.get_status_display }}
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="px-4 py-16 text-center">
+                        <div class="flex flex-col items-center gap-3 text-gray-400">
+                            <i class="fas fa-search text-5xl"></i>
+                            <p class="font-semibold text-lg">No se encontraron ventas</p>
+                            <p class="text-sm">Intenta ajustar los filtros</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

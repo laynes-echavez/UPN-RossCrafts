@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Configuración de IIS para Ross Crafts
+Copiar este archivo como web.config y ajustar las rutas según tu instalación
+-->
+<configuration>
+  <system.webServer>
+    <handlers>
+      <add name="Python FastCGI" 
+           path="*" 
+           verb="*" 
+           modules="FastCgiModule" 
+           scriptProcessor="C:\inetpub\wwwroot\ross_crafts\venv\Scripts\python.exe|C:\inetpub\wwwroot\ross_crafts\venv\Lib\site-packages\wfastcgi.py" 
+           resourceType="Unspecified" 
+           requireAccess="Script" />
+    </handlers>
+    
+    <!-- Configuración de archivos estáticos -->
+    <staticContent>
+      <mimeMap fileExtension=".woff" mimeType="application/font-woff" />
+      <mimeMap fileExtension=".woff2" mimeType="application/font-woff2" />
+      <mimeMap fileExtension=".json" mimeType="application/json" />
+    </staticContent>
+    
+    <!-- Rewrite rules para HTTPS (opcional) -->
+    <rewrite>
+      <rules>
+        <rule name="Redirect to HTTPS" stopProcessing="true">
+          <match url="(.*)" />
+          <conditions>
+            <add input="{HTTPS}" pattern="off" ignoreCase="true" />
+          </conditions>
+          <action type="Redirect" url="https://{HTTP_HOST}/{R:1}" redirectType="Permanent" />
+        </rule>
+      </rules>
+    </rewrite>
+    
+    <!-- Seguridad -->
+    <security>
+      <requestFiltering>
+        <hiddenSegments>
+          <add segment=".env" />
+          <add segment=".git" />
+          <add segment="venv" />
+        </hiddenSegments>
+      </requestFiltering>
+    </security>
+    
+    <!-- Headers de seguridad -->
+    <httpProtocol>
+      <customHeaders>
+        <add name="X-Content-Type-Options" value="nosniff" />
+        <add name="X-Frame-Options" value="DENY" />
+        <add name="X-XSS-Protection" value="1; mode=block" />
+      </customHeaders>
+    </httpProtocol>
+  </system.webServer>
+  
+  <!-- Configuración de Django -->
+  <appSettings>
+    <add key="WSGI_HANDLER" value="django.core.wsgi.get_wsgi_application()" />
+    <add key="PYTHONPATH" value="C:\inetpub\wwwroot\ross_crafts" />
+    <add key="DJANGO_SETTINGS_MODULE" value="settings.production" />
+  </appSettings>
+</configuration>

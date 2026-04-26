@@ -1,0 +1,228 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Clientes - Ross Crafts{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-primary flex items-center gap-2">
+            <i class="fas fa-users text-secondary"></i> Gestión de Clientes
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">
+            {{ page_obj.paginator.count }} cliente{{ page_obj.paginator.count|pluralize }} en total
+        </p>
+    </div>
+    <div class="flex items-center gap-2">
+        {% if user.role in 'gerente,administrador' %}
+        <a href="{% url 'customers:customer_export' %}"
+           class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg transition text-sm shadow-sm">
+            <i class="fas fa-file-excel"></i> Exportar Excel
+        </a>
+        {% endif %}
+        <a href="{% url 'customers:customer_create' %}"
+           class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-4 py-2 rounded-lg transition text-sm shadow-sm">
+            <i class="fas fa-user-plus"></i> Nuevo Cliente
+        </a>
+    </div>
+</div>
+
+<!-- Filters Card -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 sticky top-16 z-10">
+    <form method="get" class="flex flex-wrap gap-3 items-end">
+        <!-- Search -->
+        <div class="flex-1 min-w-[250px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Buscar</label>
+            <div class="relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" name="search" value="{{ search }}"
+                       placeholder="Nombre, email o DNI..."
+                       class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition">
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div class="min-w-[140px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Estado</label>
+            <select name="is_active"
+                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition bg-white">
+                <option value="">Todos</option>
+                <option value="1" {% if selected_is_active == '1' %}selected{% endif %}>Activos</option>
+                <option value="0" {% if selected_is_active == '0' %}selected{% endif %}>Inactivos</option>
+            </select>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex gap-2">
+            <button type="submit"
+                    class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-4 py-2 rounded-lg transition text-sm">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+            {% if search or selected_is_active %}
+            <a href="{% url 'customers:customer_list' %}"
+               class="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold px-3 py-2 rounded-lg transition text-sm">
+                <i class="fas fa-times text-xs"></i> Limpiar
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Customers Table -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-primary text-white">
+                    <th class="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Cliente</th>
+                    <th class="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Contacto</th>
+                    <th class="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">DNI</th>
+                    <th class="px-4 py-3 text-center font-semibold text-xs uppercase tracking-wider">Estado</th>
+                    <th class="px-4 py-3 text-center font-semibold text-xs uppercase tracking-wider">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for customer in customers %}
+                <tr class="hover:bg-cream/60 transition-colors">
+                    
+                    <!-- Customer Name + Avatar -->
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0">
+                                <span class="text-secondary font-bold text-sm">
+                                    {{ customer.first_name|first|upper }}{{ customer.last_name|first|upper }}
+                                </span>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-primary">{{ customer.full_name }}</p>
+                                {% if customer.address %}
+                                <p class="text-xs text-gray-400 truncate max-w-[200px]">
+                                    <i class="fas fa-map-marker-alt text-[10px]"></i> {{ customer.address }}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Contact Info -->
+                    <td class="px-4 py-3">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-1.5 text-gray-600">
+                                <i class="fas fa-envelope text-xs text-gray-400"></i>
+                                <span class="text-xs">{{ customer.email }}</span>
+                            </div>
+                            {% if customer.phone %}
+                            <div class="flex items-center gap-1.5 text-gray-600">
+                                <i class="fas fa-phone text-xs text-gray-400"></i>
+                                <span class="text-xs">{{ customer.phone }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <!-- DNI -->
+                    <td class="px-4 py-3">
+                        {% if customer.dni %}
+                        <span class="font-mono text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                            {{ customer.dni }}
+                        </span>
+                        {% else %}
+                        <span class="text-xs text-gray-400 italic">Sin DNI</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Status -->
+                    <td class="px-4 py-3 text-center">
+                        {% if customer.is_active %}
+                        <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Activo
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-500 text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span> Inactivo
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="px-4 py-3">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <a href="{% url 'customers:customer_profile' customer.pk %}"
+                               title="Ver perfil"
+                               class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 hover:bg-accent text-gray-600 hover:text-primary transition">
+                                <i class="fas fa-eye text-xs"></i>
+                            </a>
+                            <a href="{% url 'customers:customer_update' customer.pk %}"
+                               title="Editar"
+                               class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/20 hover:bg-secondary text-primary hover:text-white transition">
+                                <i class="fas fa-pencil-alt text-xs"></i>
+                            </a>
+                            {% if user.role in 'gerente,administrador' and customer.is_active %}
+                            <a href="{% url 'customers:customer_deactivate' customer.pk %}"
+                               title="Desactivar"
+                               onclick="return confirm('¿Estás seguro de desactivar este cliente?')"
+                               class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-50 hover:bg-red-500 text-red-500 hover:text-white transition">
+                                <i class="fas fa-user-slash text-xs"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-4 py-16 text-center">
+                        <div class="flex flex-col items-center gap-3 text-gray-400">
+                            <i class="fas fa-users text-5xl"></i>
+                            <p class="font-semibold text-lg">No se encontraron clientes</p>
+                            <p class="text-sm">Intenta ajustar los filtros o crea un nuevo cliente</p>
+                            <a href="{% url 'customers:customer_create' %}"
+                               class="mt-2 inline-flex items-center gap-2 bg-primary text-white font-semibold px-4 py-2 rounded-lg hover:bg-primary-dark transition text-sm">
+                                <i class="fas fa-user-plus"></i> Nuevo Cliente
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/50">
+        <p class="text-xs text-gray-500">
+            Mostrando <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong> de <strong>{{ page_obj.paginator.count }}</strong> clientes
+        </p>
+        <div class="flex items-center gap-1">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if search %}&search={{ search }}{% endif %}{% if selected_is_active %}&is_active={{ selected_is_active }}{% endif %}"
+               class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white hover:bg-accent text-gray-600 hover:text-primary transition text-xs">
+                <i class="fas fa-angle-double-left"></i>
+            </a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_is_active %}&is_active={{ selected_is_active }}{% endif %}"
+               class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white hover:bg-accent text-gray-600 hover:text-primary transition text-xs">
+                <i class="fas fa-angle-left"></i>
+            </a>
+            {% endif %}
+
+            <span class="inline-flex items-center justify-center px-3 h-8 rounded-lg bg-primary text-white text-xs font-semibold">
+                {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_is_active %}&is_active={{ selected_is_active }}{% endif %}"
+               class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white hover:bg-accent text-gray-600 hover:text-primary transition text-xs">
+                <i class="fas fa-angle-right"></i>
+            </a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if selected_is_active %}&is_active={{ selected_is_active }}{% endif %}"
+               class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white hover:bg-accent text-gray-600 hover:text-primary transition text-xs">
+                <i class="fas fa-angle-double-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

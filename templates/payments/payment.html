@@ -1,0 +1,295 @@
+{% extends 'store/base_store.html' %}
+
+{% block title %}Pago Seguro - Ross Crafts{% endblock %}
+
+{% block extra_css %}
+<style>
+    #card-element {
+        padding: 14px 16px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 12px;
+        background: white;
+        transition: border-color 0.2s;
+    }
+    #card-element.StripeElement--focus { border-color: #41431B; box-shadow: 0 0 0 3px rgba(65,67,27,0.1); }
+    #card-element.StripeElement--invalid { border-color: #ef4444; }
+    #card-errors { min-height: 20px; }
+    .btn-pay-loading .btn-text { display: none; }
+    .btn-pay-loading .spinner { display: flex; }
+    .spinner { display: none; align-items: center; justify-content: center; gap: 8px; }
+    .spinner-ring {
+        width: 20px; height: 20px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="bg-primary text-white py-10">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl font-bold mb-1 flex items-center gap-3">
+            <i class="fas fa-credit-card text-secondary"></i> Pago Seguro
+        </h1>
+        <nav class="text-sm text-white/60 mt-2">
+            <a href="{% url 'ecommerce:home' %}" class="hover:text-white transition">Inicio</a>
+            <span class="mx-2">/</span>
+            <a href="{% url 'ecommerce:cart' %}" class="hover:text-white transition">Carrito</a>
+            <span class="mx-2">/</span>
+            <a href="{% url 'payments:checkout' %}" class="hover:text-white transition">Checkout</a>
+            <span class="mx-2">/</span>
+            <span class="text-white">Pago</span>
+        </nav>
+    </div>
+</div>
+
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    <!-- Stepper -->
+    <div class="flex items-center justify-center gap-2 mb-10">
+        <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold">
+                <i class="fas fa-check text-xs"></i>
+            </div>
+            <span class="text-sm font-semibold text-secondary">Envío</span>
+        </div>
+        <div class="w-16 h-0.5 bg-secondary"></div>
+        <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold">
+                <i class="fas fa-check text-xs"></i>
+            </div>
+            <span class="text-sm font-semibold text-secondary">Resumen</span>
+        </div>
+        <div class="w-16 h-0.5 bg-primary"></div>
+        <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">3</div>
+            <span class="text-sm font-semibold text-primary">Pago</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Payment Form -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+
+                <h2 class="text-xl font-bold text-primary mb-2 flex items-center gap-2">
+                    <i class="fas fa-shield-alt text-secondary"></i> Información de Pago
+                </h2>
+                <p class="text-sm text-gray-500 mb-6 flex items-center gap-1.5">
+                    <i class="fas fa-lock text-green-500 text-xs"></i>
+                    Tus datos están protegidos con cifrado SSL de 256 bits
+                </p>
+
+                <!-- Dirección de envío (resumen) -->
+                <div class="bg-cream rounded-xl p-4 mb-6 flex items-start gap-3">
+                    <i class="fas fa-map-marker-alt text-secondary mt-0.5 text-sm"></i>
+                    <div class="text-sm">
+                        <p class="font-semibold text-primary">{{ checkout_data.full_name }}</p>
+                        <p class="text-gray-500">{{ checkout_data.address }}, {{ checkout_data.district }}, {{ checkout_data.city }}</p>
+                    </div>
+                    <a href="{% url 'payments:checkout' %}?step=1" class="ml-auto text-xs text-primary hover:underline font-medium whitespace-nowrap">Editar</a>
+                </div>
+
+                {% if debug %}
+                <!-- Test cards (solo en desarrollo) -->
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                    <p class="text-xs font-bold text-amber-700 uppercase tracking-wide mb-2">
+                        <i class="fas fa-flask mr-1"></i> Modo Prueba — Tarjetas de Test
+                    </p>
+                    <div class="space-y-1 text-xs text-amber-700 font-mono">
+                        <p><span class="text-green-700 font-bold">✓ Exitoso:</span> 4242 4242 4242 4242</p>
+                        <p><span class="text-red-600 font-bold">✗ Rechazada:</span> 4000 0000 0000 0002</p>
+                        <p><span class="text-blue-600 font-bold">⚡ 3D Secure:</span> 4000 0025 0000 3155</p>
+                        <p class="text-amber-600 mt-1">Vencimiento: cualquier fecha futura · CVV: cualquier 3 dígitos</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Stripe Card Element -->
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Datos de Tarjeta
+                    </label>
+                    <div id="card-element"></div>
+                    <p id="card-errors" class="text-red-500 text-xs mt-2"></p>
+                </div>
+
+                <!-- Logos de tarjetas -->
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="text-xs text-gray-400">Aceptamos:</span>
+                    <i class="fab fa-cc-visa text-2xl text-blue-700"></i>
+                    <i class="fab fa-cc-mastercard text-2xl text-red-500"></i>
+                    <i class="fab fa-cc-amex text-2xl text-blue-500"></i>
+                    <i class="fab fa-stripe text-2xl text-indigo-600"></i>
+                </div>
+
+                <form id="payment-form">
+                    <button type="submit" id="submit-button"
+                            class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-6 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 text-base">
+                        <span class="btn-text flex items-center gap-2">
+                            <i class="fas fa-lock text-sm"></i>
+                            Pagar S/. {{ total|floatformat:2 }}
+                        </span>
+                        <div class="spinner">
+                            <div class="spinner-ring"></div>
+                            <span>Procesando...</span>
+                        </div>
+                    </button>
+                </form>
+
+                <p class="text-center text-xs text-gray-400 mt-4">
+                    Al pagar aceptas nuestros <a href="#" class="underline hover:text-primary">Términos y Condiciones</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-24">
+                <div class="bg-primary px-5 py-4">
+                    <h3 class="text-white font-bold flex items-center gap-2">
+                        <i class="fas fa-receipt"></i> Resumen
+                    </h3>
+                </div>
+                <div class="p-5 space-y-3">
+                    {% for item in items %}
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg overflow-hidden bg-accent flex-shrink-0">
+                            {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover">
+                            {% else %}
+                            <div class="w-full h-full flex items-center justify-center">
+                                <i class="fas fa-palette text-primary/30 text-sm"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-semibold text-primary truncate">{{ item.product.name }}</p>
+                            <p class="text-xs text-gray-400">×{{ item.quantity }}</p>
+                        </div>
+                        <p class="text-xs font-bold text-primary whitespace-nowrap">S/. {{ item.subtotal|floatformat:2 }}</p>
+                    </div>
+                    {% endfor %}
+                    <hr class="border-gray-100">
+                    <div class="flex justify-between text-sm text-gray-600">
+                        <span>Subtotal</span>
+                        <span>S/. {{ subtotal|floatformat:2 }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600">
+                        <span>Envío</span>
+                        <span>{% if shipping_cost > 0 %}S/. {{ shipping_cost|floatformat:2 }}{% else %}<span class="text-green-600 font-semibold">Gratis</span>{% endif %}</span>
+                    </div>
+                    <hr class="border-gray-100">
+                    <div class="flex justify-between font-bold text-primary text-lg">
+                        <span>Total</span>
+                        <span>S/. {{ total|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+const stripe = Stripe('{{ stripe_public_key }}');
+const elements = stripe.elements();
+
+const cardElement = elements.create('card', {
+    style: {
+        base: {
+            color: '#41431B',
+            fontFamily: 'Inter, system-ui, sans-serif',
+            fontSize: '15px',
+            fontSmoothing: 'antialiased',
+            '::placeholder': { color: '#9ca3af' },
+        },
+        invalid: { color: '#ef4444', iconColor: '#ef4444' },
+    },
+    hidePostalCode: true,
+});
+cardElement.mount('#card-element');
+
+cardElement.on('change', ({ error }) => {
+    document.getElementById('card-errors').textContent = error ? error.message : '';
+});
+
+const form = document.getElementById('payment-form');
+const btn = document.getElementById('submit-button');
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    btn.classList.add('btn-pay-loading');
+    document.getElementById('card-errors').textContent = '';
+
+    try {
+        // 1. Crear PaymentIntent en el servidor
+        const intentRes = await fetch('{% url "payments:create_intent" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+        });
+        const intentData = await intentRes.json();
+        if (intentData.error) throw new Error(intentData.error);
+
+        // 2. Confirmar pago con Stripe
+        const { error, paymentIntent } = await stripe.confirmCardPayment(intentData.clientSecret, {
+            payment_method: {
+                card: cardElement,
+                billing_details: {
+                    name:  '{{ checkout_data.full_name|escapejs }}',
+                    email: '{{ checkout_data.email|escapejs }}',
+                },
+            },
+        });
+
+        if (error) {
+            document.getElementById('card-errors').textContent = error.message;
+            btn.disabled = false;
+            btn.classList.remove('btn-pay-loading');
+            return;
+        }
+
+        if (paymentIntent.status !== 'succeeded') {
+            document.getElementById('card-errors').textContent = 'El pago no fue aprobado. Intenta nuevamente.';
+            btn.disabled = false;
+            btn.classList.remove('btn-pay-loading');
+            return;
+        }
+
+        // 3. Notificar al servidor para crear la venta, stock y orden
+        const confirmRes = await fetch('{% url "payments:confirm_payment" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: JSON.stringify({ payment_intent_id: paymentIntent.id }),
+        });
+        const confirmData = await confirmRes.json();
+
+        if (!confirmData.success) {
+            throw new Error(confirmData.error || 'Error al registrar el pedido');
+        }
+
+        // 4. Redirigir a página de éxito
+        window.location.href = '{% url "payments:success" %}';
+
+    } catch (err) {
+        document.getElementById('card-errors').textContent = err.message || 'Error al procesar el pago.';
+        btn.disabled = false;
+        btn.classList.remove('btn-pay-loading');
+    }
+});
+</script>
+{% endblock %}

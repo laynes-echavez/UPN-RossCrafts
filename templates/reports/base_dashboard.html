@@ -1,0 +1,62 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}{% block report_title %}Reportes{% endblock %} - Ross Crafts{% endblock %}
+
+{% block content %}
+<div class="flex gap-6">
+
+    <!-- Sidebar de Reportes -->
+    <aside class="hidden lg:flex flex-col w-56 flex-shrink-0">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-24">
+            <div class="bg-primary px-4 py-3">
+                <p class="text-white font-semibold text-sm flex items-center gap-2">
+                    <i class="fas fa-chart-line"></i> Reportes
+                </p>
+            </div>
+            <nav class="p-2 space-y-0.5">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 pt-2 pb-1">Análisis</p>
+                <a href="{% url 'reports:dashboard' %}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition
+                          {% if request.resolver_match.url_name == 'dashboard' %}bg-primary text-white{% else %}text-gray-600 hover:bg-accent hover:text-primary{% endif %}">
+                    <i class="fas fa-tachometer-alt w-4 text-center"></i> Dashboard
+                </a>
+                <a href="{% url 'reports:reporte_ventas' %}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition
+                          {% if 'ventas' in request.path %}bg-primary text-white{% else %}text-gray-600 hover:bg-accent hover:text-primary{% endif %}">
+                    <i class="fas fa-dollar-sign w-4 text-center"></i> Ventas
+                </a>
+                <a href="{% url 'reports:reporte_stock' %}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition
+                          {% if 'stock' in request.path %}bg-primary text-white{% else %}text-gray-600 hover:bg-accent hover:text-primary{% endif %}">
+                    <i class="fas fa-boxes w-4 text-center"></i> Stock
+                </a>
+                <a href="{% url 'reports:reporte_clientes' %}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition
+                          {% if 'clientes' in request.path %}bg-primary text-white{% else %}text-gray-600 hover:bg-accent hover:text-primary{% endif %}">
+                    <i class="fas fa-users w-4 text-center"></i> Clientes
+                </a>
+
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 pt-3 pb-1">Gestión</p>
+                <a href="{% url 'stock:product_list' %}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-accent hover:text-primary transition">
+                    <i class="fas fa-box w-4 text-center"></i> Productos
+                </a>
+                <a href="{% url 'sales:pos' %}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-accent hover:text-primary transition">
+                    <i class="fas fa-cash-register w-4 text-center"></i> POS
+                </a>
+                <a href="{% url 'customers:customer_list' %}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-accent hover:text-primary transition">
+                    <i class="fas fa-user w-4 text-center"></i> Clientes
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Contenido principal -->
+    <div class="flex-1 min-w-0">
+        {% block dashboard_content %}{% endblock %}
+    </div>
+
+</div>
+{% endblock %}

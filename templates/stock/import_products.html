@@ -1,0 +1,208 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Importar Productos - Ross Crafts{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="mb-6">
+    <div class="flex items-center gap-3 mb-2">
+        <a href="{% url 'stock:product_list' %}"
+           class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-gray-200 hover:bg-accent text-gray-600 hover:text-primary transition">
+            <i class="fas fa-arrow-left text-sm"></i>
+        </a>
+        <h1 class="text-2xl font-bold text-primary flex items-center gap-2">
+            <i class="fas fa-file-excel text-green-600"></i> Importar Productos desde Excel
+        </h1>
+    </div>
+    <p class="text-sm text-gray-500 ml-12">
+        Carga masiva de productos mediante archivo Excel
+    </p>
+</div>
+
+<!-- Main Card -->
+<div class="max-w-5xl">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        
+        <!-- Instructions Section -->
+        <div class="p-6 bg-cream border-b border-accent">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
+                    <i class="fas fa-info-circle text-white text-lg"></i>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-lg font-bold text-primary mb-3">Instrucciones de Importación</h2>
+                    <p class="text-sm text-gray-600 mb-4">
+                        El archivo Excel debe contener las siguientes columnas <strong>en este orden exacto</strong>:
+                    </p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                        <div class="flex items-start gap-2 bg-white rounded-lg p-3 border border-accent">
+                            <i class="fas fa-check-circle text-green-600 mt-0.5"></i>
+                            <div>
+                                <p class="text-sm font-semibold text-primary">Nombre</p>
+                                <p class="text-xs text-gray-500">Nombre del producto (requerido)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 bg-white rounded-lg p-3 border border-accent">
+                            <i class="fas fa-check-circle text-green-600 mt-0.5"></i>
+                            <div>
+                                <p class="text-sm font-semibold text-primary">SKU</p>
+                                <p class="text-xs text-gray-500">Código único del producto (requerido)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 bg-white rounded-lg p-3 border border-accent">
+                            <i class="fas fa-circle text-gray-300 mt-0.5 text-xs"></i>
+                            <div>
+                                <p class="text-sm font-semibold text-primary">Categoría</p>
+                                <p class="text-xs text-gray-500">Nombre de la categoría (opcional)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 bg-white rounded-lg p-3 border border-accent">
+                            <i class="fas fa-circle text-gray-300 mt-0.5 text-xs"></i>
+                            <div>
+                                <p class="text-sm font-semibold text-primary">Precio</p>
+                                <p class="text-xs text-gray-500">Precio de venta (opcional)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 bg-white rounded-lg p-3 border border-accent">
+                            <i class="fas fa-circle text-gray-300 mt-0.5 text-xs"></i>
+                            <div>
+                                <p class="text-sm font-semibold text-primary">Costo</p>
+                                <p class="text-xs text-gray-500">Precio de costo (opcional)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 bg-white rounded-lg p-3 border border-accent">
+                            <i class="fas fa-circle text-gray-300 mt-0.5 text-xs"></i>
+                            <div>
+                                <p class="text-sm font-semibold text-primary">Stock Actual</p>
+                                <p class="text-xs text-gray-500">Cantidad en stock (opcional)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 bg-white rounded-lg p-3 border border-accent">
+                            <i class="fas fa-circle text-gray-300 mt-0.5 text-xs"></i>
+                            <div>
+                                <p class="text-sm font-semibold text-primary">Stock Mínimo</p>
+                                <p class="text-xs text-gray-500">Stock mínimo requerido (opcional)</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-start gap-2">
+                        <i class="fas fa-exclamation-triangle text-orange-600 mt-0.5"></i>
+                        <p class="text-xs text-orange-800">
+                            <strong>Importante:</strong> La primera fila debe contener los encabezados de las columnas. Los productos con SKU existente serán actualizados.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Example Table -->
+        <div class="p-6 bg-gray-50 border-b border-gray-100">
+            <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <i class="fas fa-table text-secondary"></i> Ejemplo de Formato
+            </h3>
+            <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
+                <table class="w-full text-xs">
+                    <thead>
+                        <tr class="bg-primary text-white">
+                            <th class="px-3 py-2 text-left font-semibold">Nombre</th>
+                            <th class="px-3 py-2 text-left font-semibold">SKU</th>
+                            <th class="px-3 py-2 text-left font-semibold">Categoría</th>
+                            <th class="px-3 py-2 text-right font-semibold">Precio</th>
+                            <th class="px-3 py-2 text-right font-semibold">Costo</th>
+                            <th class="px-3 py-2 text-center font-semibold">Stock Actual</th>
+                            <th class="px-3 py-2 text-center font-semibold">Stock Mínimo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-gray-100">
+                            <td class="px-3 py-2 text-gray-700">Bolso Artesanal</td>
+                            <td class="px-3 py-2 font-mono text-gray-600">BOLSO001</td>
+                            <td class="px-3 py-2 text-gray-700">Textiles</td>
+                            <td class="px-3 py-2 text-right text-gray-700">150.00</td>
+                            <td class="px-3 py-2 text-right text-gray-700">75.00</td>
+                            <td class="px-3 py-2 text-center text-gray-700">20</td>
+                            <td class="px-3 py-2 text-center text-gray-700">5</td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="px-3 py-2 text-gray-700">Collar de Plata</td>
+                            <td class="px-3 py-2 font-mono text-gray-600">COLLAR002</td>
+                            <td class="px-3 py-2 text-gray-700">Joyería</td>
+                            <td class="px-3 py-2 text-right text-gray-700">89.90</td>
+                            <td class="px-3 py-2 text-right text-gray-700">45.00</td>
+                            <td class="px-3 py-2 text-center text-gray-700">15</td>
+                            <td class="px-3 py-2 text-center text-gray-700">3</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Upload Form -->
+        <form method="post" enctype="multipart/form-data" class="p-6">
+            {% csrf_token %}
+            
+            <div class="mb-6">
+                <label for="{{ form.file.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Seleccionar Archivo Excel
+                </label>
+                <div class="flex items-center justify-center w-full">
+                    <label for="{{ form.file.id_for_label }}" class="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-200 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-accent transition">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                            <p class="mb-2 text-sm text-gray-600">
+                                <span class="font-semibold">Haz clic para seleccionar</span> o arrastra el archivo aquí
+                            </p>
+                            <p class="text-xs text-gray-500">Archivos Excel (.xlsx, .xls) - Máximo 10MB</p>
+                        </div>
+                        <input type="file" name="{{ form.file.name }}" id="{{ form.file.id_for_label }}" 
+                               accept=".xlsx,.xls" class="hidden" onchange="updateFileName(this)">
+                    </label>
+                </div>
+                <p id="file-name" class="mt-2 text-sm text-gray-600 text-center hidden"></p>
+                {% if form.file.errors %}
+                <p class="mt-2 text-xs text-red-600 text-center">{{ form.file.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t border-gray-100">
+                <a href="{% url 'stock:product_list' %}"
+                   class="inline-flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 font-semibold px-6 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-6 py-2.5 rounded-lg transition text-sm shadow-sm">
+                    <i class="fas fa-file-import"></i> Importar Productos
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Download Template Link -->
+    <div class="mt-4 text-center">
+        <p class="text-sm text-gray-500">
+            ¿No tienes un archivo de ejemplo? 
+            <a href="#" class="text-primary hover:text-primary-dark font-semibold underline">
+                Descarga la plantilla Excel
+            </a>
+        </p>
+    </div>
+</div>
+
+<script>
+function updateFileName(input) {
+    const fileName = input.files[0]?.name;
+    const fileNameDisplay = document.getElementById('file-name');
+    if (fileName) {
+        fileNameDisplay.textContent = '📄 ' + fileName;
+        fileNameDisplay.classList.remove('hidden');
+    } else {
+        fileNameDisplay.classList.add('hidden');
+    }
+}
+</script>
+
+{% endblock %}

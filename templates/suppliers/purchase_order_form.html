@@ -1,0 +1,174 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Nueva Orden de Compra - Ross Crafts{% endblock %}
+{% block content %}
+
+<div class="flex items-center gap-4 mb-6">
+    <a href="{% url 'suppliers:purchase_order_list' %}"
+       class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-primary hover:border-primary transition shadow-sm">
+        <i class="fas fa-arrow-left text-sm"></i>
+    </a>
+    <div>
+        <h1 class="text-2xl font-bold text-primary flex items-center gap-2">
+            <i class="fas fa-plus text-secondary"></i> Nueva Orden de Compra
+        </h1>
+        <p class="text-sm text-gray-500 mt-0.5">Completa los datos para crear una nueva orden</p>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="bg-primary px-6 py-4">
+        <h2 class="text-white font-semibold flex items-center gap-2"><i class="fas fa-shopping-cart"></i> Datos de la Orden</h2>
+    </div>
+    <div class="p-6">
+        <form method="post" id="purchase-order-form">
+            {% csrf_token %}
+            <input type="hidden" name="items_json" id="items-json">
+
+            {% if form.errors %}
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
+                <i class="fas fa-exclamation-circle mt-0.5 flex-shrink-0"></i>
+                <span>Por favor corrige los errores a continuación.</span>
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{{ form.supplier.label }} <span class="text-red-500">*</span></label>
+                    {{ form.supplier }}
+                    {% if form.supplier.errors %}<p class="mt-1 text-xs text-red-600">{{ form.supplier.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{{ form.notes.label }}</label>
+                {{ form.notes }}
+            </div>
+
+            <div class="border-t border-gray-100 mb-6"></div>
+
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-primary flex items-center gap-2"><i class="fas fa-box text-secondary"></i> Productos</h3>
+                <button type="button" onclick="addItem()"
+                        class="inline-flex items-center gap-2 bg-secondary/20 hover:bg-secondary text-primary hover:text-white font-semibold px-3 py-2 rounded-lg transition text-sm">
+                    <i class="fas fa-plus text-xs"></i> Agregar Producto
+                </button>
+            </div>
+
+            <div id="items-container" class="space-y-3 mb-6"></div>
+
+            <div class="flex justify-end mb-6">
+                <div class="bg-accent rounded-xl px-6 py-4 min-w-[220px]">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Total de la Orden</p>
+                    <p id="total-display" class="text-3xl font-bold text-primary">S/. 0.00</p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                <a href="{% url 'suppliers:purchase_order_list' %}"
+                   class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold px-4 py-2 rounded-lg transition text-sm">
+                    <i class="fas fa-times text-xs"></i> Cancelar
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-5 py-2 rounded-lg transition text-sm shadow-sm">
+                    <i class="fas fa-save"></i> Crear Orden
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let itemCounter = 0;
+const productsData = [
+    {% for product in products %}
+    { id: {{ product.id }}, name: "{{ product.name|escapejs }}", sku: "{{ product.sku|escapejs }}", cost: {{ product.cost_price }} }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+function addItem() {
+    const container = document.getElementById('items-container');
+    const itemId = itemCounter++;
+    const tw = 'w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition';
+    const optionsHtml = productsData.map(p => `<option value="${p.id}" data-cost="${p.cost}">${p.name} (${p.sku})</option>`).join('');
+    container.insertAdjacentHTML('beforeend', `
+        <div class="item-row bg-gray-50 border border-gray-200 rounded-xl p-4" id="item-${itemId}">
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                <div class="sm:col-span-5">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Producto</label>
+                    <select class="product-select ${tw} bg-white" onchange="updateItemCost(${itemId})" data-item-id="${itemId}">
+                        <option value="">Seleccionar producto...</option>${optionsHtml}
+                    </select>
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Cantidad</label>
+                    <input type="number" class="quantity-input ${tw}" min="1" value="1" onchange="updateItemSubtotal(${itemId})" data-item-id="${itemId}">
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Costo Unit.</label>
+                    <input type="number" class="cost-input ${tw}" step="0.01" min="0.01" onchange="updateItemSubtotal(${itemId})" data-item-id="${itemId}">
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Subtotal</label>
+                    <input type="text" class="subtotal-display w-full px-3 py-2 border border-gray-100 rounded-lg text-sm bg-white font-semibold text-primary" readonly value="S/. 0.00" data-item-id="${itemId}">
+                </div>
+                <div class="sm:col-span-1 flex justify-end">
+                    <button type="button" onclick="removeItem(${itemId})"
+                            class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-red-50 hover:bg-red-500 text-red-500 hover:text-white transition">
+                        <i class="fas fa-trash text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>`);
+}
+
+function updateItemCost(itemId) {
+    const select = document.querySelector(`.product-select[data-item-id="${itemId}"]`);
+    const costInput = document.querySelector(`.cost-input[data-item-id="${itemId}"]`);
+    if (select.value) {
+        costInput.value = select.options[select.selectedIndex].getAttribute('data-cost');
+        updateItemSubtotal(itemId);
+    }
+}
+
+function updateItemSubtotal(itemId) {
+    const qty = parseFloat(document.querySelector(`.quantity-input[data-item-id="${itemId}"]`).value) || 0;
+    const cost = parseFloat(document.querySelector(`.cost-input[data-item-id="${itemId}"]`).value) || 0;
+    document.querySelector(`.subtotal-display[data-item-id="${itemId}"]`).value = `S/. ${(qty * cost).toFixed(2)}`;
+    updateTotal();
+}
+
+function removeItem(itemId) {
+    const item = document.getElementById(`item-${itemId}`);
+    if (item) { item.remove(); updateTotal(); }
+}
+
+function updateTotal() {
+    let total = 0;
+    document.querySelectorAll('.item-row').forEach(row => {
+        const id = row.id.split('-')[1];
+        const qty = parseFloat(document.querySelector(`.quantity-input[data-item-id="${id}"]`)?.value) || 0;
+        const cost = parseFloat(document.querySelector(`.cost-input[data-item-id="${id}"]`)?.value) || 0;
+        total += qty * cost;
+    });
+    document.getElementById('total-display').textContent = `S/. ${total.toFixed(2)}`;
+}
+
+document.getElementById('purchase-order-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const items = [];
+    document.querySelectorAll('.item-row').forEach(row => {
+        const id = row.id.split('-')[1];
+        const ps = document.querySelector(`.product-select[data-item-id="${id}"]`);
+        const qi = document.querySelector(`.quantity-input[data-item-id="${id}"]`);
+        const ci = document.querySelector(`.cost-input[data-item-id="${id}"]`);
+        if (ps?.value && qi && ci) items.push({ product_id: ps.value, quantity: qi.value, unit_cost: ci.value });
+    });
+    if (items.length === 0) { alert('Debe agregar al menos un producto a la orden.'); return; }
+    document.getElementById('items-json').value = JSON.stringify(items);
+    this.submit();
+});
+
+window.addEventListener('load', () => addItem());
+</script>
+
+{% endblock %}

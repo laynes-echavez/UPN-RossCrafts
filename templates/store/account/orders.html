@@ -1,0 +1,191 @@
+{% extends 'store/base_store.html' %}
+
+{% block title %}Mis Pedidos - Ross Crafts{% endblock %}
+
+{% block content %}
+<div class="bg-primary text-white py-10">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl font-bold flex items-center gap-3">
+            <i class="fas fa-box text-secondary"></i> Mi Cuenta
+        </h1>
+    </div>
+</div>
+
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex flex-col lg:flex-row gap-6">
+
+        <!-- Sidebar -->
+        <aside class="w-full lg:w-56 flex-shrink-0">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-24">
+                <div class="p-4 border-b border-gray-100">
+                    <div class="w-14 h-14 rounded-full bg-secondary/20 flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-user text-primary text-2xl"></i>
+                    </div>
+                    <p class="text-center font-bold text-primary text-sm">{{ customer.full_name }}</p>
+                    <p class="text-center text-xs text-gray-400 truncate">{{ customer.email }}</p>
+                </div>
+                <nav class="p-2 space-y-0.5">
+                    <a href="{% url 'ecommerce:customer_profile' %}"
+                       class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-accent hover:text-primary transition">
+                        <i class="fas fa-user w-4 text-center"></i> Mi Perfil
+                    </a>
+                    <a href="{% url 'ecommerce:customer_orders' %}"
+                       class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium bg-primary text-white">
+                        <i class="fas fa-box w-4 text-center"></i> Mis Pedidos
+                    </a>
+                    <a href="{% url 'ecommerce:customer_change_password' %}"
+                       class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-accent hover:text-primary transition">
+                        <i class="fas fa-lock w-4 text-center"></i> Contraseña
+                    </a>
+                    <a href="{% url 'ecommerce:customer_logout' %}"
+                       class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition">
+                        <i class="fas fa-sign-out-alt w-4 text-center"></i> Cerrar Sesión
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="flex-1 min-w-0 space-y-6">
+
+            <!-- Pedidos Online -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-primary flex items-center gap-2">
+                        <i class="fas fa-shopping-bag text-secondary"></i> Pedidos Online
+                        {% if orders %}
+                        <span class="bg-accent text-primary text-xs font-bold px-2 py-0.5 rounded-full">{{ orders.count }}</span>
+                        {% endif %}
+                    </h2>
+                </div>
+                {% if orders %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-primary text-white">
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">N° Pedido</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Fecha</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Dirección</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Total</th>
+                                <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Estado</th>
+                                <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for order in orders %}
+                            <tr class="hover:bg-cream/60 transition-colors">
+                                <td class="px-4 py-3 font-mono text-xs text-gray-500">#{{ order.id }}</td>
+                                <td class="px-4 py-3 text-xs text-gray-600">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                                <td class="px-4 py-3 text-xs text-gray-500 max-w-xs truncate">{{ order.shipping_address }}</td>
+                                <td class="px-4 py-3 text-right font-bold text-primary">S/. {{ order.total|floatformat:2 }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    {% if order.status == 'paid' %}
+                                    <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Pagado
+                                    </span>
+                                    {% elif order.status == 'shipped' %}
+                                    <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                                        <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span> Enviado
+                                    </span>
+                                    {% elif order.status == 'delivered' %}
+                                    <span class="inline-flex items-center gap-1 bg-secondary/20 text-primary text-xs font-semibold px-2.5 py-1 rounded-full">
+                                        <span class="w-1.5 h-1.5 bg-secondary rounded-full"></span> Entregado
+                                    </span>
+                                    {% elif order.status == 'cancelled' %}
+                                    <span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                                        <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span> Cancelado
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                                        <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span> {{ order.get_status_display }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <a href="{% url 'ecommerce:customer_order_detail' order.pk %}"
+                                       class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 hover:bg-accent text-gray-600 hover:text-primary transition">
+                                        <i class="fas fa-eye text-xs"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="px-6 py-12 text-center text-gray-400">
+                    <i class="fas fa-shopping-bag text-4xl mb-3 block"></i>
+                    <p class="font-semibold">No tienes pedidos online aún</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Compras Presenciales -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h2 class="text-lg font-bold text-primary flex items-center gap-2">
+                        <i class="fas fa-store text-secondary"></i> Compras en Tienda
+                        {% if sales %}
+                        <span class="bg-accent text-primary text-xs font-bold px-2 py-0.5 rounded-full">{{ sales.count }}</span>
+                        {% endif %}
+                    </h2>
+                </div>
+                {% if sales %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-primary text-white">
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Comprobante</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Fecha</th>
+                                <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Método</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Total</th>
+                                <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for sale in sales %}
+                            <tr class="hover:bg-cream/60 transition-colors">
+                                <td class="px-4 py-3 font-mono text-xs font-bold text-primary">{{ sale.receipt_number }}</td>
+                                <td class="px-4 py-3 text-xs text-gray-600">{{ sale.created_at|date:"d/m/Y H:i" }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    <span class="inline-flex items-center bg-accent text-primary text-xs font-semibold px-2.5 py-1 rounded-full">
+                                        {{ sale.get_payment_method_display }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-right font-bold text-primary">S/. {{ sale.total|floatformat:2 }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Completado
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="px-6 py-12 text-center text-gray-400">
+                    <i class="fas fa-store text-4xl mb-3 block"></i>
+                    <p class="font-semibold">No tienes compras presenciales registradas</p>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if not orders and not sales %}
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+                <div class="w-20 h-20 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-shopping-bag text-4xl text-secondary"></i>
+                </div>
+                <h3 class="text-xl font-bold text-primary mb-2">Aún no tienes compras</h3>
+                <p class="text-gray-500 mb-6">Cuando realices tu primera compra, aparecerá aquí.</p>
+                <a href="{% url 'ecommerce:catalog' %}"
+                   class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-6 rounded-xl transition">
+                    <i class="fas fa-shopping-bag"></i> Ir a la Tienda
+                </a>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

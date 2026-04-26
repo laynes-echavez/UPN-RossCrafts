@@ -1,0 +1,272 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Productos - Ross Crafts{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-primary flex items-center gap-2">
+            <i class="fas fa-box text-secondary"></i> Gestión de Productos
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">
+            {{ page_obj.paginator.count }} producto{{ page_obj.paginator.count|pluralize }} en total
+        </p>
+    </div>
+    {% if user.role in 'gerente,administrador' %}
+    <div class="flex items-center gap-2">
+        <a href="{% url 'stock:import_products' %}"
+           class="inline-flex items-center gap-2 bg-white border border-gray-200 text-primary font-semibold px-4 py-2 rounded-lg hover:bg-accent transition text-sm shadow-sm">
+            <i class="fas fa-file-excel text-green-600"></i> Importar Excel
+        </a>
+        <a href="{% url 'stock:product_create' %}"
+           class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-4 py-2 rounded-lg transition text-sm shadow-sm">
+            <i class="fas fa-plus"></i> Nuevo Producto
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Filters Card -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 sticky top-16 z-10">
+    <form method="get" class="flex flex-wrap gap-3 items-end">
+        <!-- Search -->
+        <div class="flex-1 min-w-[180px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Buscar</label>
+            <div class="relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" name="search" value="{{ search }}"
+                       placeholder="Nombre o SKU..."
+                       class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition">
+            </div>
+        </div>
+
+        <!-- Category -->
+        <div class="min-w-[150px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Categoría</label>
+            <select name="category"
+                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition bg-white">
+                <option value="">Todas</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>
+                    {{ cat.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Stock Level -->
+        <div class="min-w-[140px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Stock</label>
+            <select name="stock_level"
+                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition bg-white">
+                <option value="">Todos</option>
+                <option value="low" {% if selected_stock_level == 'low' %}selected{% endif %}>Stock Bajo</option>
+                <option value="out" {% if selected_stock_level == 'out' %}selected{% endif %}>Sin Stock</option>
+            </select>
+        </div>
+
+        <!-- Status -->
+        <div class="min-w-[130px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Estado</label>
+            <select name="is_active"
+                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition bg-white">
+                <option value="">Todos</option>
+                <option value="1" {% if selected_is_active == '1' %}selected{% endif %}>Activos</option>
+                <option value="0" {% if selected_is_active == '0' %}selected{% endif %}>Inactivos</option>
+            </select>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex gap-2">
+            <button type="submit"
+                    class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-4 py-2 rounded-lg transition text-sm">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+            {% if search or selected_category or selected_stock_level or selected_is_active %}
+            <a href="{% url 'stock:product_list' %}"
+               class="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold px-3 py-2 rounded-lg transition text-sm">
+                <i class="fas fa-times text-xs"></i> Limpiar
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Products Table -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-primary text-white">
+                    <th class="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">SKU</th>
+                    <th class="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Producto</th>
+                    <th class="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Categoría</th>
+                    <th class="px-4 py-3 text-right font-semibold text-xs uppercase tracking-wider">Precio</th>
+                    <th class="px-4 py-3 text-center font-semibold text-xs uppercase tracking-wider">Stock</th>
+                    <th class="px-4 py-3 text-center font-semibold text-xs uppercase tracking-wider">Estado</th>
+                    <th class="px-4 py-3 text-center font-semibold text-xs uppercase tracking-wider">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for product in products %}
+                <tr class="hover:bg-cream/60 transition-colors {% if product.needs_restock %}bg-red-50 hover:bg-red-50{% endif %}">
+
+                    <!-- SKU -->
+                    <td class="px-4 py-3">
+                        <span class="font-mono text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                            {{ product.sku }}
+                        </span>
+                    </td>
+
+                    <!-- Name + image placeholder -->
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-lg overflow-hidden flex-shrink-0 bg-accent flex items-center justify-center">
+                                {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                                {% else %}
+                                <i class="fas fa-box text-primary/40 text-sm"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <p class="font-semibold text-primary leading-tight">{{ product.name }}</p>
+                                {% if product.description %}
+                                <p class="text-xs text-gray-400 truncate max-w-[200px]">{{ product.description|truncatechars:50 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Category -->
+                    <td class="px-4 py-3">
+                        <span class="inline-flex items-center gap-1 bg-accent text-primary text-xs font-medium px-2.5 py-1 rounded-full">
+                            <i class="fas fa-tag text-[10px]"></i> {{ product.category.name }}
+                        </span>
+                    </td>
+
+                    <!-- Price -->
+                    <td class="px-4 py-3 text-right">
+                        <span class="font-bold text-primary">S/. {{ product.price }}</span>
+                    </td>
+
+                    <!-- Stock -->
+                    <td class="px-4 py-3 text-center">
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="font-bold text-base {% if product.stock_quantity == 0 %}text-red-600{% elif product.needs_restock %}text-orange-500{% else %}text-green-600{% endif %}">
+                                {{ product.stock_quantity }}
+                            </span>
+                            {% if product.stock_quantity == 0 %}
+                            <span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                                <i class="fas fa-times-circle text-[10px]"></i> Sin stock
+                            </span>
+                            {% elif product.needs_restock %}
+                            <span class="inline-flex items-center gap-1 bg-orange-100 text-orange-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                                <i class="fas fa-exclamation-triangle text-[10px]"></i> Stock bajo
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                                <i class="fas fa-check-circle text-[10px]"></i> OK
+                            </span>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <!-- Status -->
+                    <td class="px-4 py-3 text-center">
+                        {% if product.is_active %}
+                        <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Activo
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-500 text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span> Inactivo
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="px-4 py-3">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <a href="{% url 'stock:product_detail' product.pk %}"
+                               title="Ver detalle"
+                               class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 hover:bg-accent text-gray-600 hover:text-primary transition">
+                                <i class="fas fa-eye text-xs"></i>
+                            </a>
+                            {% if user.role in 'gerente,administrador' %}
+                            <a href="{% url 'stock:product_update' product.pk %}"
+                               title="Editar"
+                               class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/20 hover:bg-secondary text-primary transition">
+                                <i class="fas fa-pencil-alt text-xs"></i>
+                            </a>
+                            {% endif %}
+                            {% if user.role == 'gerente' %}
+                            <a href="{% url 'stock:product_delete' product.pk %}"
+                               title="Desactivar"
+                               class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-50 hover:bg-red-500 text-red-500 hover:text-white transition">
+                                <i class="fas fa-trash-alt text-xs"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-4 py-16 text-center">
+                        <div class="flex flex-col items-center gap-3 text-gray-400">
+                            <i class="fas fa-box-open text-5xl"></i>
+                            <p class="font-semibold text-lg">No se encontraron productos</p>
+                            <p class="text-sm">Intenta ajustar los filtros o crea un nuevo producto</p>
+                            {% if user.role in 'gerente,administrador' %}
+                            <a href="{% url 'stock:product_create' %}"
+                               class="mt-2 inline-flex items-center gap-2 bg-primary text-white font-semibold px-4 py-2 rounded-lg hover:bg-primary-dark transition text-sm">
+                                <i class="fas fa-plus"></i> Nuevo Producto
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/50">
+        <p class="text-xs text-gray-500">
+            Mostrando <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong> de <strong>{{ page_obj.paginator.count }}</strong> productos
+        </p>
+        <div class="flex items-center gap-1">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if search %}&search={{ search }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_stock_level %}&stock_level={{ selected_stock_level }}{% endif %}{% if selected_is_active %}&is_active={{ selected_is_active }}{% endif %}"
+               class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white hover:bg-accent text-gray-600 hover:text-primary transition text-xs">
+                <i class="fas fa-angle-double-left"></i>
+            </a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_stock_level %}&stock_level={{ selected_stock_level }}{% endif %}{% if selected_is_active %}&is_active={{ selected_is_active }}{% endif %}"
+               class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white hover:bg-accent text-gray-600 hover:text-primary transition text-xs">
+                <i class="fas fa-angle-left"></i>
+            </a>
+            {% endif %}
+
+            <span class="inline-flex items-center justify-center px-3 h-8 rounded-lg bg-primary text-white text-xs font-semibold">
+                {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_stock_level %}&stock_level={{ selected_stock_level }}{% endif %}{% if selected_is_active %}&is_active={{ selected_is_active }}{% endif %}"
+               class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white hover:bg-accent text-gray-600 hover:text-primary transition text-xs">
+                <i class="fas fa-angle-right"></i>
+            </a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_stock_level %}&stock_level={{ selected_stock_level }}{% endif %}{% if selected_is_active %}&is_active={{ selected_is_active }}{% endif %}"
+               class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white hover:bg-accent text-gray-600 hover:text-primary transition text-xs">
+                <i class="fas fa-angle-double-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Movimientos de Stock - Ross Crafts{% endblock %}
+{% block content %}
+
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-primary flex items-center gap-2">
+            <i class="fas fa-history text-secondary"></i> Movimientos de Stock
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">Historial completo de entradas, salidas y ajustes</p>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <form method="get" class="flex flex-wrap gap-3 items-end">
+        <div class="flex-1 min-w-[200px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Producto</label>
+            <select name="product" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition bg-white">
+                <option value="">Todos los productos</option>
+                {% for product in products %}
+                <option value="{{ product.id }}" {% if selected_product == product.id|stringformat:"s" %}selected{% endif %}>
+                    {{ product.name }} ({{ product.sku }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="min-w-[140px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tipo</label>
+            <select name="movement_type" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition bg-white">
+                <option value="">Todos</option>
+                <option value="entrada" {% if selected_movement_type == 'entrada' %}selected{% endif %}>Entrada</option>
+                <option value="salida"  {% if selected_movement_type == 'salida'  %}selected{% endif %}>Salida</option>
+                <option value="ajuste"  {% if selected_movement_type == 'ajuste'  %}selected{% endif %}>Ajuste</option>
+            </select>
+        </div>
+        <div class="min-w-[140px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Desde</label>
+            <input type="date" name="date_from" value="{{ date_from }}"
+                   class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition">
+        </div>
+        <div class="min-w-[140px]">
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Hasta</label>
+            <input type="date" name="date_to" value="{{ date_to }}"
+                   class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition">
+        </div>
+        <div class="flex gap-2">
+            <button type="submit"
+                    class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-4 py-2 rounded-lg transition text-sm">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+            {% if selected_product or selected_movement_type or date_from or date_to %}
+            <a href="{% url 'stock:movement_list' %}"
+               class="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold px-3 py-2 rounded-lg transition text-sm">
+                <i class="fas fa-times text-xs"></i> Limpiar
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Tabla -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-primary text-white">
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Fecha</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Producto</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Tipo</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Cantidad</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Anterior</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Nuevo</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Usuario</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Motivo</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for m in movements %}
+                <tr class="hover:bg-cream/60 transition-colors">
+                    <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                        <span class="font-medium text-gray-700">{{ m.created_at|date:"d/m/Y" }}</span>
+                        <span class="ml-1 text-gray-400">{{ m.created_at|date:"H:i" }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <a href="{% url 'stock:product_detail' m.product.pk %}" class="font-medium text-primary hover:underline text-xs">
+                            {{ m.product.name }}
+                        </a>
+                        <span class="ml-1 font-mono text-xs text-gray-400">{{ m.product.sku }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        {% if m.movement_type == 'entrada' %}
+                        <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <i class="fas fa-arrow-down text-[9px]"></i> Entrada
+                        </span>
+                        {% elif m.movement_type == 'salida' %}
+                        <span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <i class="fas fa-arrow-up text-[9px]"></i> Salida
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 bg-orange-100 text-orange-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <i class="fas fa-sync text-[9px]"></i> Ajuste
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-center font-bold {% if m.movement_type == 'entrada' %}text-green-600{% elif m.movement_type == 'salida' %}text-red-600{% else %}text-orange-600{% endif %}">
+                        {% if m.movement_type == 'entrada' %}+{% elif m.movement_type == 'salida' %}-{% endif %}{{ m.quantity }}
+                    </td>
+                    <td class="px-4 py-3 text-center text-gray-500 text-xs">{{ m.previous_quantity }}</td>
+                    <td class="px-4 py-3 text-center font-bold text-primary text-xs">{{ m.new_quantity }}</td>
+                    <td class="px-4 py-3 text-xs text-gray-600">{{ m.user.username }}</td>
+                    <td class="px-4 py-3 text-xs text-gray-500">{{ m.reason|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="px-4 py-16 text-center">
+                        <div class="flex flex-col items-center gap-3 text-gray-400">
+                            <i class="fas fa-history text-5xl"></i>
+                            <p class="font-semibold">No se encontraron movimientos</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div class="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/50">
+        <p class="text-xs text-gray-500">Página <strong>{{ page_obj.number }}</strong> de <strong>{{ page_obj.paginator.num_pages }}</strong></p>
+        <div class="flex items-center gap-1">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if selected_product %}&product={{ selected_product }}{% endif %}{% if selected_movement_type %}&movement_type={{ selected_movement_type }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}"
+               class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white hover:bg-accent text-gray-600 hover:text-primary transition text-xs">
+                <i class="fas fa-angle-left"></i>
+            </a>
+            {% endif %}
+            <span class="inline-flex items-center justify-center px-3 h-8 rounded-lg bg-primary text-white text-xs font-semibold">
+                {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            </span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if selected_product %}&product={{ selected_product }}{% endif %}{% if selected_movement_type %}&movement_type={{ selected_movement_type }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}"
+               class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white hover:bg-accent text-gray-600 hover:text-primary transition text-xs">
+                <i class="fas fa-angle-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
